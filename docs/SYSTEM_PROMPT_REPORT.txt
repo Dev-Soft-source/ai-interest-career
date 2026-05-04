@@ -1,0 +1,97 @@
+System Prompt Redesign Report
+Project: Career Interest Matching Engine
+Date: 2026-04-26
+
+==================================================
+1) EXECUTIVE VERSION (Internal)
+==================================================
+
+Objective
+- Design a reliable System Prompt that matches a user profile to relevant jobs by combining:
+  1) questionnaire meaning (48 items),
+  2) structured scoring (6 dimensions, 0-4),
+  3) job semantic meaning (descriptions + job vectors).
+
+Why this redesign was needed
+- Early prompt behavior could drift toward score-only ranking.
+- The redesign enforces semantic interpretation and improves reproducibility across runs and models.
+
+Core design decisions
+- Three-layer mandatory fusion:
+  - Item-level semantic signals,
+  - 6-dimension structural fit,
+  - Job-description interpretation.
+- Full questionnaire usage:
+  - All 48 items are used when available, not only dimension averages.
+- Deterministic scoring framework:
+  - final_score = 0.50*structural + 0.30*item_semantic + 0.20*description_semantic
+  - Fallback if item-level is missing:
+    final_score = 0.70*structural + 0.30*description_semantic
+- Deterministic tie-break:
+  - for close scores (<= 2): item-cluster fit -> mismatch minimization -> description clarity.
+- Strict output contract:
+  - JSON schema with full job score coverage, top_3, summary, and reviewer notes.
+- Auditability:
+  - Deterministic mode requires component-score traces and tie-break reporting.
+
+Testing approach
+- 6 benchmark profiles (diverse patterns + tie-break stress case),
+- A/B comparison on:
+  - data/jobs_30_core.json
+  - data/jobs_40_client.json
+- Quick pass/fail grid + cross-model scoring sheet (ChatGPT/Claude/Gemini).
+
+Current result status
+- First tested run passed:
+  - valid schema,
+  - coherent top_3,
+  - clear semantic justification,
+  - explicit tie-break notes.
+- Variance issue (same input, different outputs) identified and mitigated via Deterministic Mode.
+
+Outcome
+- Prompt is now:
+  - more semantically faithful,
+  - more consistent across runs,
+  - easier to audit and compare across models,
+  - suitable for structured benchmarking and pilot deployment.
+
+Recommended next step
+- Run full matrix: 6 samples x 2 job sets x 3 models.
+- Select production model by:
+  - consistency,
+  - semantic quality,
+  - JSON reliability.
+
+==================================================
+2) CLIENT-FACING VERSION (Non-technical)
+==================================================
+
+What we improved in the career matching AI
+- We redesigned the AI instruction set so recommendations are more meaningful and reliable.
+
+What changed
+- The AI now uses three sources together:
+  1) the detailed questionnaire answers,
+  2) the scoring model,
+  3) the real meaning of each job description.
+- It is no longer allowed to rank jobs using scores alone.
+- We added consistency rules so repeated tests with the same profile are more stable.
+
+Why this matters
+- Better match quality: recommendations reflect what the person actually likes, not just numbers.
+- Better explanations: each top recommendation now has clearer reasoning.
+- Better quality control: results are easier to compare across different AI models.
+
+How we tested it
+- We prepared 6 representative test profiles.
+- We tested on 2 job datasets (core list and extended list).
+- We use a pass/fail checklist and a scoring sheet to evaluate result quality and consistency.
+
+Current status
+- Initial tests are positive: output format is correct and recommendations are coherent.
+- We identified and addressed run-to-run variability by adding a deterministic mode.
+
+Next step
+- Complete the full benchmark across models and select the most consistent one for production use.
+

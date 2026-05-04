@@ -1,0 +1,45 @@
+{
+  "user_dimension_vector": {
+  "creation_expression": 0.0,
+  "analysis_conceptual": 0.0,
+  "technical_manual": 0.0,
+  "physical_bodily": 0.0,
+  "social_collective": 0.0,
+  "organization_management": 0.0
+  },
+  "top_5": [
+  {
+  "job_id": "ASSISTANT_SOCIAL",
+  "job_label": "Social Worker",
+  "score": 54,
+  "reason": "Low overall demands across technical_manual and physical_bodily align with your absence of preference for hands-on or physical activities. Your neutral responses across helping and interaction items suggest tolerance for social roles without strong pressure, fitting structured support contexts. The role’s coordination aspect remains moderate and manageable."
+  },
+  {
+  "job_id": "CIP",
+  "job_label": "Career Counselor",
+  "score": 54,
+  "reason": "Balanced and moderate requirements in social_collective and organization_management fit a profile with no strong inclinations. Your lack of strong preference for analysis or creation aligns with structured guidance and follow-up tasks. The role allows engagement without heavy technical or physical demands."
+  },
+  {
+  "job_id": "RESP_PLANNING",
+  "job_label": "Scheduling Manager",
+  "score": 54,
+  "reason": "Moderate organization_management requirements match a neutral stance toward planning and structuring activities. Low physical_bodily and creation_expression demands align with your absence of interest in movement or expressive tasks. The role focuses on coordination without requiring strong specialization."
+  },
+  {
+  "job_id": "CONSULTANT",
+  "job_label": "Consultant",
+  "score": 54,
+  "reason": "Moderate levels across analysis_conceptual and organization_management fit a profile without strong preferences. Your neutral responses to problem-solving and structuring tasks suggest potential adaptability to advisory work. The role avoids heavy physical or manual demands."
+  },
+  {
+  "job_id": "COORD_EQUIPE",
+  "job_label": "Team Coordinator",
+  "score": 54,
+  "reason": "Moderate organization_management and social_collective demands align with a neutral profile that does not avoid coordination tasks. Your lack of strong inclination toward technical or physical activities fits supervisory and organizational roles. The job emphasizes structure over specialization."
+  }
+  ],
+  "summary": "Your profile shows no expressed preferences across all dimensions, resulting in a neutral baseline.\nRoles with moderate, balanced demands and low specialization rank highest.\nJobs requiring strong technical, physical, or creative engagement are less aligned.\nBroad coordination or support roles may offer the most adaptable entry points.",
+  "annex": "",
+  "notes_for_reviewers": "All user dimensions = 0.0. Ranking purely reflects jobs with lowest absolute scores across dimensions. Top jobs (ASSISTANT_SOCIAL, CIP, RESP_PLANNING, CONSULTANT, COORD_EQUIPE) all have mean_distance≈1.8333, final_score=54. Tie_break=true across all; resolved primarily by lower max dimension gaps and then job order consistency."
+  }

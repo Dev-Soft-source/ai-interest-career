@@ -1,0 +1,392 @@
+[
+  {
+    "job_id": "ARTISAN",
+    "job_label": "Artisan",
+    "scores": {
+      "creation_expression": 3,
+      "analysis_conceptual": 1,
+      "technical_manual": 4,
+      "physical_bodily": 2,
+      "social_collective": 2,
+      "organization_management": 3
+    },
+    "short_description": "Manual and technical work with materials, creating objects, managing a small workshop or craft business."
+  },
+  {
+    "job_id": "INFIRMIER",
+    "job_label": "Nurse",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 2,
+      "technical_manual": 4,
+      "physical_bodily": 3,
+      "social_collective": 4,
+      "organization_management": 3
+    },
+    "short_description": "Provides technical and relational care to patients, works within a healthcare team, organizes and coordinates care."
+  },
+  {
+    "job_id": "DEV_WEB",
+    "job_label": "Web Developer",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 4,
+      "technical_manual": 4,
+      "physical_bodily": 0,
+      "social_collective": 2,
+      "organization_management": 2
+    },
+    "short_description": "Designs and develops websites or web applications, analyzes needs, codes and maintains technical solutions."
+  },
+  {
+    "job_id": "CHEF_PROJET",
+    "job_label": "Project Manager",
+    "scores": {
+      "creation_expression": 2,
+      "analysis_conceptual": 3,
+      "technical_manual": 2,
+      "physical_bodily": 0,
+      "social_collective": 3,
+      "organization_management": 4
+    },
+    "short_description": "Leads projects from start to finish, coordinates teams, manages schedule, budget, quality, and communication with stakeholders."
+  },
+  {
+    "job_id": "PROFESSEUR",
+    "job_label": "Teacher",
+    "scores": {
+      "creation_expression": 2,
+      "analysis_conceptual": 3,
+      "technical_manual": 1,
+      "physical_bodily": 1,
+      "social_collective": 4,
+      "organization_management": 3
+    },
+    "short_description": "Teaches a subject to students, transmits knowledge, supports learning, and organizes lessons and assessments."
+  },
+  {
+    "job_id": "AIDE_SOIGNANT",
+    "job_label": "Nursing Assistant",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 1,
+      "technical_manual": 4,
+      "physical_bodily": 3,
+      "social_collective": 4,
+      "organization_management": 2
+    },
+    "short_description": "Provides hygiene and comfort care, assists with daily tasks, works closely with patients under nurse supervision."
+  },
+  {
+    "job_id": "EDUCATEUR_SPEC",
+    "job_label": "Special Education Worker",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 2,
+      "technical_manual": 2,
+      "physical_bodily": 1,
+      "social_collective": 4,
+      "organization_management": 3
+    },
+    "short_description": "Supports young people or adults in difficulty, develops educational projects, works with families and institutions."
+  },
+  {
+    "job_id": "ASSISTANT_SOCIAL",
+    "job_label": "Social Worker",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 2,
+      "technical_manual": 1,
+      "physical_bodily": 0,
+      "social_collective": 4,
+      "organization_management": 3
+    },
+    "short_description": "Helps people access their rights and find social solutions, provides long-term support and coordinates with various stakeholders."
+  },
+  {
+    "job_id": "PSYCHOLOGUE",
+    "job_label": "Psychologist",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 3,
+      "technical_manual": 0,
+      "physical_bodily": 0,
+      "social_collective": 4,
+      "organization_management": 2
+    },
+    "short_description": "Conducts clinical interviews, listens and analyzes psychological situations, offers insights and support."
+  },
+  {
+    "job_id": "CIP",
+    "job_label": "Career Counselor",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 2,
+      "technical_manual": 1,
+      "physical_bodily": 0,
+      "social_collective": 4,
+      "organization_management": 3
+    },
+    "short_description": "Supports people toward employment or training, leads workshops, tracks progress, and coordinates with companies and organizations."
+  },
+  {
+    "job_id": "FORMATEUR",
+    "job_label": "Trainer",
+    "scores": {
+      "creation_expression": 2,
+      "analysis_conceptual": 3,
+      "technical_manual": 1,
+      "physical_bodily": 0,
+      "social_collective": 4,
+      "organization_management": 3
+    },
+    "short_description": "Designs and delivers training for adults, adapts content to audiences, and organizes learning sessions."
+  },
+  {
+    "job_id": "COACH_SPORTIF",
+    "job_label": "Fitness Coach",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 1,
+      "technical_manual": 2,
+      "physical_bodily": 4,
+      "social_collective": 4,
+      "organization_management": 2
+    },
+    "short_description": "Guides individuals or groups in sports activities, sets goals, and motivates them to improve safely."
+  },
+  {
+    "job_id": "ANIMATEUR_SC",
+    "job_label": "Community Activity Leader",
+    "scores": {
+      "creation_expression": 2,
+      "analysis_conceptual": 1,
+      "technical_manual": 1,
+      "physical_bodily": 2,
+      "social_collective": 4,
+      "organization_management": 2
+    },
+    "short_description": "Organizes and leads activities for various audiences, builds social connections, and encourages community participation."
+  },
+  {
+    "job_id": "RESP_PEDAGO",
+    "job_label": "Educational Manager",
+    "scores": {
+      "creation_expression": 2,
+      "analysis_conceptual": 3,
+      "technical_manual": 1,
+      "physical_bodily": 0,
+      "social_collective": 3,
+      "organization_management": 4
+    },
+    "short_description": "Leads training programs, coordinates trainers, organizes learning paths, and ensures educational quality."
+  },
+  {
+    "job_id": "COORD_EQUIPE",
+    "job_label": "Team Coordinator",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 2,
+      "technical_manual": 2,
+      "physical_bodily": 0,
+      "social_collective": 3,
+      "organization_management": 4
+    },
+    "short_description": "Organizes daily team work, assigns tasks, monitors activity, and liaises with management."
+  },
+  {
+    "job_id": "RESP_PLANNING",
+    "job_label": "Scheduling Manager",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 2,
+      "technical_manual": 1,
+      "physical_bodily": 0,
+      "social_collective": 2,
+      "organization_management": 4
+    },
+    "short_description": "Creates and adjusts schedules for teams or resources, manages constraints and unexpected events."
+  },
+  {
+    "job_id": "LOGISTICIEN",
+    "job_label": "Logistics Specialist",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 2,
+      "technical_manual": 3,
+      "physical_bodily": 1,
+      "social_collective": 2,
+      "organization_management": 4
+    },
+    "short_description": "Plans and optimizes the flow of goods or materials, manages stock, transport, and deadlines."
+  },
+  {
+    "job_id": "CONSULTANT",
+    "job_label": "Consultant",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 3,
+      "technical_manual": 1,
+      "physical_bodily": 0,
+      "social_collective": 3,
+      "organization_management": 3
+    },
+    "short_description": "Analyzes organizational or market situations, advises clients, and recommends improvements."
+  },
+  {
+    "job_id": "DATA_ANALYST",
+    "job_label": "Data Analyst",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 4,
+      "technical_manual": 3,
+      "physical_bodily": 0,
+      "social_collective": 2,
+      "organization_management": 2
+    },
+    "short_description": "Collects, cleans, and analyzes data to produce indicators and dashboards for decision-making."
+  },
+  {
+    "job_id": "CHARGE_ETUDES",
+    "job_label": "Research Analyst",
+    "scores": {
+      "creation_expression": 1,
+      "analysis_conceptual": 4,
+      "technical_manual": 2,
+      "physical_bodily": 0,
+      "social_collective": 2,
+      "organization_management": 3
+    },
+    "short_description": "Designs and conducts studies (surveys, statistical analyses, reports) to support decisions."
+  },
+  {
+    "job_id": "TECH_MAINT",
+    "job_label": "Maintenance Technician",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 2,
+      "technical_manual": 4,
+      "physical_bodily": 2,
+      "social_collective": 2,
+      "organization_management": 2
+    },
+    "short_description": "Maintains and repairs equipment, diagnoses breakdowns, and restores machines to operation."
+  },
+  {
+    "job_id": "CUISINIER",
+    "job_label": "Cook",
+    "scores": {
+      "creation_expression": 2,
+      "analysis_conceptual": 1,
+      "technical_manual": 4,
+      "physical_bodily": 2,
+      "social_collective": 2,
+      "organization_management": 2
+    },
+    "short_description": "Prepares dishes in a professional kitchen, handles ingredients, follows hygiene standards, and organizes the workstation."
+  },
+  {
+    "job_id": "TECH_INFO",
+    "job_label": "IT Technician",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 3,
+      "technical_manual": 4,
+      "physical_bodily": 0,
+      "social_collective": 2,
+      "organization_management": 2
+    },
+    "short_description": "Installs, configures, and troubleshoots computers, networks, or servers, and provides technical support."
+  },
+  {
+    "job_id": "GRAPHISTE",
+    "job_label": "Graphic Designer",
+    "scores": {
+      "creation_expression": 4,
+      "analysis_conceptual": 1,
+      "technical_manual": 2,
+      "physical_bodily": 0,
+      "social_collective": 2,
+      "organization_management": 1
+    },
+    "short_description": "Creates visual materials (posters, logos, communication media), translating ideas into images."
+  },
+  {
+    "job_id": "UX_UI",
+    "job_label": "UX/UI Designer",
+    "scores": {
+      "creation_expression": 3,
+      "analysis_conceptual": 3,
+      "technical_manual": 2,
+      "physical_bodily": 0,
+      "social_collective": 2,
+      "organization_management": 2
+    },
+    "short_description": "Designs user interfaces and experiences, combining user needs, ergonomics, and aesthetics."
+  },
+  {
+    "job_id": "REDACTEUR_CM",
+    "job_label": "Content Writer / Content Manager",
+    "scores": {
+      "creation_expression": 4,
+      "analysis_conceptual": 2,
+      "technical_manual": 1,
+      "physical_bodily": 0,
+      "social_collective": 3,
+      "organization_management": 2
+    },
+    "short_description": "Creates and manages written content for web or social media, adapting tone and managing editorial calendars."
+  },
+  {
+    "job_id": "PRODUCT_OWNER",
+    "job_label": "Product Owner",
+    "scores": {
+      "creation_expression": 2,
+      "analysis_conceptual": 3,
+      "technical_manual": 2,
+      "physical_bodily": 0,
+      "social_collective": 3,
+      "organization_management": 4
+    },
+    "short_description": "Owns the vision of a digital product, prioritizes backlog, balances needs, and works with developers to deliver value."
+  },
+  {
+    "job_id": "TESTEUR_LOGICIEL",
+    "job_label": "Software Tester",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 3,
+      "technical_manual": 3,
+      "physical_bodily": 0,
+      "social_collective": 2,
+      "organization_management": 2
+    },
+    "short_description": "Designs and runs application tests, identifies and documents bugs, and contributes to product quality."
+  },
+  {
+    "job_id": "MEDIATEUR_CULT",
+    "job_label": "Cultural Mediator",
+    "scores": {
+      "creation_expression": 2,
+      "analysis_conceptual": 2,
+      "technical_manual": 0,
+      "physical_bodily": 0,
+      "social_collective": 4,
+      "organization_management": 2
+    },
+    "short_description": "Builds connections between audiences and cultural venues, organizes activities, and facilitates understanding of artworks."
+  },
+  {
+    "job_id": "TECH_FOREST",
+    "job_label": "Forestry Technician",
+    "scores": {
+      "creation_expression": 0,
+      "analysis_conceptual": 2,
+      "technical_manual": 3,
+      "physical_bodily": 4,
+      "social_collective": 1,
+      "organization_management": 2
+    },
+    "short_description": "Manages and maintains forest areas, monitors conditions, organizes fieldwork, and ensures environmental protection."
+  }
+]

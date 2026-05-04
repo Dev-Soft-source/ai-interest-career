@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your career interest results</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a222d;
+      --muted: #8b9aab;
+      --text: #e8eef5;
+      --accent: #5eead4;
+      --accent-dim: #2dd4bf33;
+      --border: #2a3544;
+      --error: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #1e3a5f55, transparent),
+                  radial-gradient(800px 400px at 100% 0%, #134e4a44, transparent),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem 1.5rem 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 12px 40px #00000040;
+    }
+    .summary {
+      font-size: 1.05rem;
+    }
+    .jobs { list-style: none; padding: 0; margin: 0; }
+    .jobs li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.75rem 1rem;
+      align-items: start;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .jobs li:last-child { border-bottom: none; padding-bottom: 0; }
+    .score {
+      font-weight: 700;
+      font-size: 1.35rem;
+      color: var(--accent);
+      min-width: 3.25rem;
+      text-align: center;
+      background: var(--accent-dim);
+      border-radius: 10px;
+      padding: 0.35rem 0.5rem;
+      line-height: 1.2;
+    }
+    .job-title { font-weight: 600; font-size: 1.05rem; margin: 0 0 0.25rem; }
+    .reason { color: var(--muted); font-size: 0.92rem; margin: 0; }
+    .scores-toggle {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .scores-toggle:hover { color: var(--accent); }
+    .all-scores {
+      display: none;
+      margin-top: 0.75rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+      columns: 2;
+      gap: 0.5rem 1.5rem;
+    }
+    .all-scores.open { display: block; }
+    .all-scores div { break-inside: avoid; padding: 0.15rem 0; }
+    .state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+    .state.error { color: var(--error); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .email-badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Your career matches</h1>
+    <p class="sub">Based on your questionnaire answers.</p>
+    <div id="app"></div>
+  </main>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get("email");
+      const app = document.getElementById("app");
+
+      function apiBase() {
+        return "";
+      }
+
+      function renderLoading(msg) {
+        app.innerHTML = '<div class="state">' + (msg || "Loading results…") + "</div>";
+      }
+
+      function renderError(msg) {
+        app.innerHTML = '<div class="state error">' + msg + "</div>";
+      }
+
+      function renderData(data) {
+        const jobs = data.top_jobs || [];
+        let html = "";
+        if (data.email) {
+          html += '<span class="email-badge">' + escapeHtml(data.email) + "</span>";
+        }
+        html += '<div class="card summary">' + escapeHtml(data.summary || "") + "</div>";
+        html += '<div class="card"><h2 style="margin:0 0 1rem;font-size:1.1rem;font-weight:600;">Top recommendations</h2><ul class="jobs">';
+        jobs.forEach(function (j) {
+          html += "<li><div class=\"score\">" + Number(j.score) + '</div><div><p class="job-title">' +
+            escapeHtml(j.job) + '</p><p class="reason">' + escapeHtml(j.reason || "") + "</p></div></li>";
+        });
+        html += "</ul>";
+        const scores = data.scores || {};
+        const keys = Object.keys(scores);
+        if (keys.length) {
+          html += '<p class="scores-toggle" id="toggleScores">Show all job scores</p>';
+          html += '<div class="all-scores" id="allScores">';
+          keys.sort(function (a, b) { return scores[b] - scores[a]; }).forEach(function (k) {
+            html += "<div>" + escapeHtml(k) + ": <strong>" + scores[k] + "</strong></div>";
+          });
+          html += "</div>";
+        }
+        html += "</div>";
+        app.innerHTML = html;
+        var t = document.getElementById("toggleScores");
+        var s = document.getElementById("allScores");
+        if (t && s) {
+          t.addEventListener("click", function () {
+            var open = s.classList.toggle("open");
+            t.textContent = open ? "Hide all job scores" : "Show all job scores";
+          });
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      async function fetchResults() {
+        const r = await fetch(apiBase() + "/api/results?email=" + encodeURIComponent(email));
+        if (r.ok) return r.json();
+        if (r.status === 404) return null;
+        const err = await r.json().catch(function () { return {}; });
+        throw new Error(err.detail || r.statusText || "Request failed");
+      }
+
+      async function triggerProcess() {
+        const r = await fetch(apiBase() + "/api/process", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email }),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(function () { return {}; });
+          throw new Error(err.detail || r.statusText || "Process failed");
+        }
+        return r.json();
+      }
+
+      async function poll(maxTries, delayMs) {
+        for (var i = 0; i < maxTries; i++) {
+          var data = await fetchResults();
+          if (data) return data;
+          await new Promise(function (res) { setTimeout(res, delayMs); });
+        }
+        return null;
+      }
+
+      if (!email) {
+        renderError("Add your email to the URL, for example: <code>results.html?email=you@example.com</code>");
+        return;
+      }
+
+      renderLoading("Loading results…");
+
+      (async function () {
+        try {
+          var data = await fetchResults();
+          if (!data) {
+            renderLoading("No results yet — generating…");
+            var proc = await triggerProcess();
+            if (proc.errors && proc.errors.length && !(proc.processed && proc.processed.length)) {
+              throw new Error(proc.errors.map(function (e) { return e.error || JSON.stringify(e); }).join(" "));
+            }
+            data = await fetchResults();
+            if (!data) {
+              data = await poll(10, 1500);
+            }
+          }
+          if (!data) {
+            app.innerHTML = '<div class="state">Results are not ready yet. You can try again in a moment.' +
+              '</div><button class="btn" type="button" id="retry">Retry</button>';
+            document.getElementById("retry").onclick = function () { location.reload(); };
+            return;
+          }
+          renderData(data);
+        } catch (e) {
+          renderError(e.message || String(e));
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
