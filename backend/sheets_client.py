@@ -111,10 +111,23 @@ class SheetsClient:
         self._gc = gspread.authorize(creds)
         return self._gc
 
+    def _worksheet(self, sh, title: str):
+        import gspread
+
+        try:
+            return sh.worksheet(title)
+        except gspread.WorksheetNotFound as exc:
+            available = [ws.title for ws in sh.worksheets()]
+            raise RuntimeError(
+                f'Worksheet "{title}" was not found in spreadsheet {self.settings.spreadsheet_id}. '
+                f'Available tabs: {", ".join(available) if available else "(none)"}. '
+                "Set RESPONSES_SHEET_NAME or RESULTS_SHEET_NAME in .env to match the tab name exactly."
+            ) from exc
+
     def _responses_ws(self):
         gc = self._client()
         sh = gc.open_by_key(self.settings.spreadsheet_id)
-        return sh.worksheet(self.settings.responses_sheet_name)
+        return self._worksheet(sh, self.settings.responses_sheet_name)
 
     def _results_headers(self) -> list[str]:
         return [

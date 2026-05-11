@@ -26,6 +26,13 @@ load_dotenv(ROOT / ".env")
 
 app = FastAPI(title="Career Interest Test API", version="0.2.0")
 
+
+@app.on_event("startup")
+def _refresh_settings() -> None:
+    get_settings.cache_clear()
+    get_settings()
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
