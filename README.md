@@ -1,69 +1,134 @@
-# AI Career interest test (MVP)
+# AI career interest test
 
-Python backend reads questionnaire answers from **Google Sheets** (fed by **Tally**), calls an **LLM** to score a configurable job list, stores structured results, and serves a simple **HTML/JS** results page.
+Python **FastAPI** service reads questionnaire answers from **Google Sheets** (usually via **Tally**), ranks jobs in **Python**, asks **Gemini** or **OpenAI** for short explanations, stores results in Sheets, and serves a small **HTML/JS** results page.
 
-## Data flow
+Prompt and scoring rules follow [docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md](docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md). Implementation notes live in [docs/MIGRATION_TODO.md](docs/MIGRATION_TODO.md).
 
-1. User completes the Tally form; Tally appends **one row per respondent** to the **Responses** sheet (include an **email** column and one column per question, e.g. `Q1`, `Q2`, `Q3`).
-2. The backend **POST `/api/process`** reads unprocessed rows, calls the LLM, writes the **Results** sheet, and sets **`processed`** to `TRUE` on the response row.
-3. **GET `/api/results?email=...`** reads the saved result for that email.
-4. **`/results.html?email=...`** loads scores, top jobs, and summary via the API (it will trigger processing once if results are missing, then poll).
+## How it works
+
+1. A respondent completes the Tally form; Tally appends one row to the **Responses** sheet (`email`, **A1–F8**, `processed`).
+2. **`POST /api/process`** reads unprocessed rows, validates answers, builds a six-dimension profile, ranks jobs from the configured catalog, calls the LLM for explanations only, writes **Results**, and sets **`processed`** to `TRUE`.
+3. **`GET /api/results?email=...`** returns stored JSON for that email.
+4. **`/results.html?email=...`** loads the results page. If nothing is stored yet, it triggers processing once and polls.
+
+Ranking is deterministic in code. The LLM does not change job order or scores.
 
 ## Run locally
 
-```bash
-cd Career
+From the repository root:
+
+```powershell
 python -m venv .venv
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Edit `.env`: set **`OPENAI_API_KEY`** or **`GEMINI_API_KEY`**, **`SPREADSHEET_ID`**, and **`GOOGLE_SERVICE_ACCOUNT_FILE`**.
+On **cmd.exe**, activate with `\.venv\Scripts\activate.bat`.
 
-Start the API:
+Edit `.env`: set **`GEMINI_API_KEY`** (recommended) or **`OPENAI_API_KEY`**, plus Sheets credentials when not using mock mode.
 
-```bash
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+Start the API and results UI with Uvicorn. Do not use `python -m http.server` for the full flow; the static server cannot handle `/api/*`.
+
+```powershell
+python -m uvicorn main:app --app-dir backend --reload --host 0.0.0.0 --port 8000
 ```
 
 Open [http://localhost:8000/results.html?email=demo@example.com](http://localhost:8000/results.html?email=demo@example.com).
 
 ### Demo without Google Sheets
 
-Set **`USE_MOCK_SHEETS=true`** in `.env`. A sample row for `demo@example.com` is used; you still need a valid LLM API key.
+Set **`USE_MOCK_SHEETS=true`** in `.env`. Mock mode serves a sample **A1–F8** row for `demo@example.com`. You still need a valid LLM API key.
 
-## Google Sheets setup
+### Quick checks
 
-1. Create a Google Cloud project, enable **Google Sheets API**, create a **service account**, download the JSON key.
-2. Share your spreadsheet with the service account email (Editor).
-3. **Responses** tab: first row headers must include **`email`**, your question columns (default **`Q1`**, **`Q2`**, **`Q3`**), and **`processed`** (can start empty).
-4. **Results** tab: created automatically with columns **`email`**, **`top_jobs`** (JSON array), **`scores_json`** (JSON object), **`summary`**.
+```powershell
+python scripts\try_llm.py data\test_answers.json
+python scripts\try_llm.py --scores-only data\benchmark_samples.json
+python scripts\run_benchmark.py
+python -m pytest tests
+```
 
-Environment variables for column or sheet names are in **`backend/config.py`** (see **`.env.example`**).
+## Environment variables
 
-## Where to edit things
+| Variable | Purpose |
+|----------|---------|
+| `LLM_PROVIDER` | `gemini` (default) or `openai` |
+| `GEMINI_API_KEY` / `OPENAI_API_KEY` | LLM credentials |
+| `GEMINI_MODEL` / `OPENAI_MODEL` | Model name (`gemini-2.5-flash` by default) |
+| `LLM_TEMPERATURE` | Explanation temperature (default `0.3`) |
+| `GOOGLE_SERVICE_ACCOUNT_FILE` | Service account JSON path |
+| `SPREADSHEET_ID` | Target spreadsheet |
+| `RESPONSES_SHEET_NAME` / `RESULTS_SHEET_NAME` | Tab names |
+| `EMAIL_COLUMN` / `PROCESSED_COLUMN` | Responses headers |
+| `JOB_SET` | `core_30` (default) or `client_40` |
+| `JOBS_FILE` | Optional override for structured job JSON |
+| `TOP_K` | Ranked jobs returned (default `5`) |
+| `USE_MOCK_SHEETS` | Local demo without Google Sheets |
 
-| What | Where |
-|------|--------|
-| LLM system prompt and user instructions | **`backend/prompt_templates.py`** |
-| Default job list | **`backend/config.py`** → `default_jobs()`, or set **`JOBS_FILE`** to a JSON file like **`data/jobs.json`** |
-| Models / API shapes | **`backend/models.py`** |
-| OpenAI vs Gemini, models, sheet names | **`.env`** + **`backend/config.py`** |
-| Sheet read/write | **`backend/sheets_client.py`** |
-| Orchestration (answers → LLM → save) | **`backend/scoring_engine.py`** |
-| Results UI | **`frontend/results.html`** |
+`question_columns` defaults to **A1–F8** in `backend/config.py`. Override with comma-separated `QUESTION_COLUMNS` in `.env` if Tally exports different headers.
+
+## Google Sheets layout
+
+### Responses
+
+Row 1 must include **`email`**, **`A1` … `F8`**, and **`processed`**. Answer cells use integers **0–4**.
+
+Import helper: [data/sample_responses_row2_sample1.csv](data/sample_responses_row2_sample1.csv).
+
+### Results
+
+The backend writes:
+
+| Column | Content |
+|--------|---------|
+| `email` | Respondent email |
+| `user_dimension_vector` | JSON object with six dimension means |
+| `top_jobs` | JSON array of `job_id`, `job_label`, `score`, `reason` |
+| `summary` | Short user-facing summary |
+
+Legacy rows that store `job` instead of `job_label` are still read by the API.
+
+## Job catalogs and sample data
+
+| File | Use |
+|------|-----|
+| `data/jobs_30_core.json` | Default structured job catalog |
+| `data/jobs_40_client.json` | Extended catalog target (`JOB_SET=client_40`); must be a valid jobs array before use |
+| `data/benchmark_samples.json` | Six manual benchmark profiles |
+| `data/test_answers.example.json` | Local answers template |
+| `data/benchmark_results/scorer_core_30.json` | Latest scorer-only benchmark output |
 
 ## API
 
-- **`GET /health`** — liveness check.
-- **`GET /api/results?email=`** — JSON results for that email (404 if not stored yet).
-- **`POST /api/process`** — body optional `{"email": "x@y.com"}` to process only that respondent, or `{}` to process **all** rows where `processed` is not true.
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Liveness check |
+| `GET` | `/api/results?email=` | v2 JSON: `email`, optional `user_dimension_vector`, `top_jobs`, `summary` |
+| `POST` | `/api/process` | Optional body `{"email":"x@y.com"}` for one respondent, or `{}` for all unprocessed rows |
+| `GET` | `/results.html` | Results UI (`?email=` required) |
+
+## Where to change behavior
+
+| What | Where |
+|------|--------|
+| Explanation prompts | `backend/prompt_templates.py` |
+| Python scoring and tie-breaks | `backend/scorer.py` |
+| Job catalog loading | `backend/job_loader.py`, `JOBS_FILE`, `JOB_SET` |
+| API and result shapes | `backend/models.py`, `backend/main.py` |
+| Provider, models, sheet names | `.env`, `backend/config.py` |
+| Sheet read/write | `backend/sheets_client.py` |
+| Orchestration | `backend/scoring_engine.py` |
+| Results UI | `frontend/results.html` (source: `frontend/index.html`) |
 
 ## Tally redirect
 
-In Tally, set the thank-you screen redirect URL to your deployed site, e.g. `https://your-domain.com/results.html?email={field:email}` (use the correct merge tag for your email field).
+On the thank-you screen, redirect to your deployed host, for example:
 
-## Deployment notes
+`https://your-domain.com/results.html?email={field:email}`
 
-Run **`uvicorn backend.main:app --host 0.0.0.0 --port 8000`** behind HTTPS (reverse proxy). Ensure environment variables are set on the host; do not commit secrets or service account JSON.
+Use the correct merge tag for your email field.
+
+## Deployment
+
+Run `python -m uvicorn main:app --app-dir backend --host 0.0.0.0 --port 8000` behind HTTPS (reverse proxy). Set environment variables on the host. Do not commit `.env`, API keys, or service account JSON.

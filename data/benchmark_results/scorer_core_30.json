@@ -1,0 +1,258 @@
+{
+  "job_set": "core_30",
+  "job_count": 30,
+  "samples": {
+    "sample_1_analytical_technical": {
+      "user_dimension_vector": {
+        "creation_expression": 1.0,
+        "analysis_conceptual": 3.25,
+        "technical_manual": 2.0,
+        "physical_bodily": 0.38,
+        "social_collective": 1.5,
+        "organization_management": 2.38
+      },
+      "top_jobs": [
+        {
+          "job_id": "CHARGE_ETUDES",
+          "job_label": "Research Analyst",
+          "score": 91,
+          "mean_distance": 0.375
+        },
+        {
+          "job_id": "TESTEUR_LOGICIEL",
+          "job_label": "Software Tester",
+          "score": 85,
+          "mean_distance": 0.585
+        },
+        {
+          "job_id": "UX_UI",
+          "job_label": "UX/UI Designer",
+          "score": 85,
+          "mean_distance": 0.585
+        },
+        {
+          "job_id": "CONSULTANT",
+          "job_label": "Consultant",
+          "score": 84,
+          "mean_distance": 0.625
+        },
+        {
+          "job_id": "DATA_ANALYST",
+          "job_label": "Data Analyst",
+          "score": 83,
+          "mean_distance": 0.6683
+        }
+      ]
+    },
+    "sample_2_social_teaching": {
+      "user_dimension_vector": {
+        "creation_expression": 1.0,
+        "analysis_conceptual": 1.75,
+        "technical_manual": 0.75,
+        "physical_bodily": 0.88,
+        "social_collective": 3.62,
+        "organization_management": 2.5
+      },
+      "top_jobs": [
+        {
+          "job_id": "ASSISTANT_SOCIAL",
+          "job_label": "Social Worker",
+          "score": 91,
+          "mean_distance": 0.3767
+        },
+        {
+          "job_id": "CIP",
+          "job_label": "Career Counselor",
+          "score": 91,
+          "mean_distance": 0.3767
+        },
+        {
+          "job_id": "EDUCATEUR_SPEC",
+          "job_label": "Special Education Worker",
+          "score": 90,
+          "mean_distance": 0.4167
+        },
+        {
+          "job_id": "PROFESSEUR",
+          "job_label": "Teacher",
+          "score": 85,
+          "mean_distance": 0.5833
+        },
+        {
+          "job_id": "CONSULTANT",
+          "job_label": "Consultant",
+          "score": 85,
+          "mean_distance": 0.5833
+        }
+      ]
+    },
+    "sample_3_creative_communication": {
+      "user_dimension_vector": {
+        "creation_expression": 3.0,
+        "analysis_conceptual": 1.88,
+        "technical_manual": 1.12,
+        "physical_bodily": 0.38,
+        "social_collective": 2.62,
+        "organization_management": 1.75
+      },
+      "top_jobs": [
+        {
+          "job_id": "REDACTEUR_CM",
+          "job_label": "Content Writer / Content Manager",
+          "score": 91,
+          "mean_distance": 0.375
+        },
+        {
+          "job_id": "UX_UI",
+          "job_label": "UX/UI Designer",
+          "score": 86,
+          "mean_distance": 0.5417
+        },
+        {
+          "job_id": "MEDIATEUR_CULT",
+          "job_label": "Cultural Mediator",
+          "score": 82,
+          "mean_distance": 0.7083
+        },
+        {
+          "job_id": "GRAPHISTE",
+          "job_label": "Graphic Designer",
+          "score": 81,
+          "mean_distance": 0.7517
+        },
+        {
+          "job_id": "FORMATEUR",
+          "job_label": "Trainer",
+          "score": 78,
+          "mean_distance": 0.875
+        }
+      ]
+    },
+    "sample_4_hands_on_physical": {
+      "user_dimension_vector": {
+        "creation_expression": 0.0,
+        "analysis_conceptual": 1.25,
+        "technical_manual": 3.25,
+        "physical_bodily": 2.75,
+        "social_collective": 1.38,
+        "organization_management": 2.0
+      },
+      "top_jobs": [
+        {
+          "job_id": "TECH_FOREST",
+          "job_label": "Forestry Technician",
+          "score": 89,
+          "mean_distance": 0.4383
+        },
+        {
+          "job_id": "TECH_MAINT",
+          "job_label": "Maintenance Technician",
+          "score": 88,
+          "mean_distance": 0.4783
+        },
+        {
+          "job_id": "AIDE_SOIGNANT",
+          "job_label": "Nursing Assistant",
+          "score": 84,
+          "mean_distance": 0.645
+        },
+        {
+          "job_id": "CUISINIER",
+          "job_label": "Cook",
+          "score": 82,
+          "mean_distance": 0.7283
+        },
+        {
+          "job_id": "LOGISTICIEN",
+          "job_label": "Logistics Specialist",
+          "score": 78,
+          "mean_distance": 0.895
+        }
+      ]
+    },
+    "sample_5_management_coordination": {
+      "user_dimension_vector": {
+        "creation_expression": 0.75,
+        "analysis_conceptual": 2.25,
+        "technical_manual": 1.0,
+        "physical_bodily": 0.38,
+        "social_collective": 3.25,
+        "organization_management": 3.75
+      },
+      "top_jobs": [
+        {
+          "job_id": "CONSULTANT",
+          "job_label": "Consultant",
+          "score": 90,
+          "mean_distance": 0.3967
+        },
+        {
+          "job_id": "ASSISTANT_SOCIAL",
+          "job_label": "Social Worker",
+          "score": 90,
+          "mean_distance": 0.3967
+        },
+        {
+          "job_id": "CIP",
+          "job_label": "Career Counselor",
+          "score": 90,
+          "mean_distance": 0.3967
+        },
+        {
+          "job_id": "COORD_EQUIPE",
+          "job_label": "Team Coordinator",
+          "score": 90,
+          "mean_distance": 0.3967
+        },
+        {
+          "job_id": "RESP_PEDAGO",
+          "job_label": "Educational Manager",
+          "score": 88,
+          "mean_distance": 0.48
+        }
+      ]
+    },
+    "sample_6_mixed_tiebreak": {
+      "user_dimension_vector": {
+        "creation_expression": 1.88,
+        "analysis_conceptual": 2.5,
+        "technical_manual": 2.0,
+        "physical_bodily": 1.38,
+        "social_collective": 2.62,
+        "organization_management": 2.75
+      },
+      "top_jobs": [
+        {
+          "job_id": "EDUCATEUR_SPEC",
+          "job_label": "Special Education Worker",
+          "score": 86,
+          "mean_distance": 0.565
+        },
+        {
+          "job_id": "PROFESSEUR",
+          "job_label": "Teacher",
+          "score": 85,
+          "mean_distance": 0.605
+        },
+        {
+          "job_id": "PRODUCT_OWNER",
+          "job_label": "Product Owner",
+          "score": 85,
+          "mean_distance": 0.605
+        },
+        {
+          "job_id": "CHEF_PROJET",
+          "job_label": "Project Manager",
+          "score": 85,
+          "mean_distance": 0.605
+        },
+        {
+          "job_id": "CONSULTANT",
+          "job_label": "Consultant",
+          "score": 82,
+          "mean_distance": 0.7317
+        }
+      ]
+    }
+  }
+}

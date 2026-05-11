@@ -5,30 +5,22 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from backend.llm_service import call_llm
-from backend.models import LLMOutput
-from backend.sheets_client import ResponseRow, SheetsClient
-from backend.utils import normalize_email
+from llm_service import call_assessment
+from models import AssessmentResult
+from response_validation import validate_response_answers
+from sheets_client import ResponseRow, SheetsClient
+from utils import normalize_email
 
 logger = logging.getLogger(__name__)
 
 
-def process_user_response(row: ResponseRow, sheets: SheetsClient) -> LLMOutput:
-    answers = extract_answers(row)
-    output = call_llm(answers)
-    top_jobs = [j.model_dump() for j in output.top_jobs]
-    sheets.upsert_result(
-        email=row.email,
-        top_jobs=top_jobs,
-        scores=output.scores,
-        summary=output.summary,
-    )
+def process_user_response(row: ResponseRow, sheets: SheetsClient) -> AssessmentResult:
+    settings = sheets.settings
+    answers = validate_response_answers(row.answers, settings.question_columns)
+    result = call_assessment(answers, settings=settings)
+    sheets.upsert_result(email=row.email, result=result)
     sheets.mark_processed(row.row_number, "TRUE")
-    return output
-
-
-def extract_answers(row: ResponseRow) -> dict[str, str]:
-    return {k: v for k, v in row.answers.items() if v}
+    return result
 
 
 def process_pending(
@@ -50,9 +42,6 @@ def process_pending(
 
     for row in rows:
         if row.processed_raw in ("true", "1", "yes"):
-            continue
-        if not any(row.answers.values()):
-            errors.append({"email": row.email, "error": "No answer values in configured question columns"})
             continue
         try:
             process_user_response(row, sheets)

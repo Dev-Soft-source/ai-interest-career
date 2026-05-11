@@ -1,120 +1,49 @@
-System Prompt Alignment Report (Manual Template v2)
-Project: Career Interest Matching Engine
-Date: 2026-05-08
-Source of truth: docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md
+Career Interest Matching Engine — Alignment Summary
+Project: ai-interest-career
+Date: 2026-05-11
+Full report: docs/PROJECT_REPORT.md
+Source of truth: docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md (v2)
 
 ==================================================
 1) INTERNAL VERSION (Technical)
 ==================================================
 
 Objective
-- Align the report with the v2 manual testing template used for ChatGPT / Claude / Gemini.
-- Capture the fixed scoring contract, explanation rules, strict JSON output schema, and benchmark protocol.
+- Deliver MVP aligned with manual template v2: A1..F8 questionnaire, six-dimension job vectors,
+  numeric ranking lock, top_5 output, and explanation-only LLM role.
 
-Why this update was required
-- Previous report logic used blended scoring weights (structural + semantic), which no longer matches the v2 template.
-- The v2 template locks ranking to transparent numeric distance only, with semantics used for explanation and auditability.
+Implementation
+- Python scorer (backend/scorer.py): user vector from 48 items, mean-distance score, tie-break.
+- Explanation prompts (backend/prompt_templates.py); Gemini/OpenAI (backend/llm_service.py).
+- Sheets pipeline (backend/sheets_client.py): Responses A1..F8, Results vector + top_jobs + summary.
+- API v2 (backend/main.py); results UI (frontend/results.html).
+- Tests: 22 passing; scorer benchmark via scripts/run_benchmark.py -> data/benchmark_results/.
 
-Canonical decision model (v2)
-- Inputs supported:
-  1) item-level questionnaire (A1..F8),
-  2) pre-aggregated 6D vector,
-  3) free-text profile (with uncertainty notes).
-- User vector build:
-  - item-level answers -> mean per dimension (0..4), rounded to 2 decimals.
-- Ranking score (mandatory, equal-weight):
-  - distance_d = abs(user_d - job_d)
-  - mean_distance = average(distance_d across 6 dimensions)
-  - final_score = round((1 - mean_distance/4) * 100)
-- Non-negotiable:
-  - all 6 dimensions have identical weight,
-  - semantic interpretation cannot modify ranking.
+Production vs manual JSON
+- Runtime stores user_dimension_vector, top_jobs (job_id, job_label, score, reason), summary.
+- Manual annex / notes_for_reviewers are for model testing, not persisted in MVP API or Sheets.
 
-Tie-break and deterministic mode
-- Tie-break trigger:
-  - apply only when score gap <= 2.
-- Tie-break order:
-  1) lower max single-dimension gap,
-  2) lower gap on user top-2 dimensions,
-  3) clearer description match.
-- Deterministic execution sequence:
-  - user vector -> per-job distance/score -> ranking -> tie-break -> explanations.
-- Audit trace requirement in notes_for_reviewers for top_5:
-  - mean_distance,
-  - final_score,
-  - tie-break trigger true/false and criterion used.
-
-Semantic layer policy (explanation-only)
-- Semantic evidence is mandatory for reasons:
-  - questionnaire intent (including item-level pattern when available),
-  - job short_description interpretation.
-- Semantic layer is descriptive and explanatory only.
-- "Strong/weak dimensions" wording is allowed for readability, but never as hidden weighting.
-
-Output contract (strict JSON)
-- Must return valid JSON only (no markdown, no extra prose).
-- Required fields:
-  - user_dimension_vector
-  - top_5 (sorted descending by score)
-  - summary
-  - annex
-  - notes_for_reviewers
-- Content constraints:
-  - reasons are concise (2-3 sentences),
-  - each reason mentions at least two dimensions and one meaningful preference signal,
-  - close calls and uncertainty are documented in notes_for_reviewers.
-
-Test protocol from template
-- A/B runs:
-  - Run A -> data/jobs_30_core.json
-  - Run B -> data/jobs_40_client.json
-- Benchmarks:
-  - 6 predefined sample profiles (including tie-break stress test).
-- Evaluation:
-  - quick pass/fail matrix by expected job families,
-  - global checks for scoring lock, explanation quality, and tie-break transparency,
-  - cross-model comparison on ranking stability and JSON reliability.
-
-Current alignment status
-- Reporting logic now aligned to template v2 constraints:
-  - numeric-ranking lock,
-  - deterministic tie-break sequence,
-  - strict output schema,
-  - structured manual benchmarking.
-
-Recommended next step
-- Execute full matrix: 6 samples x 2 job sets x 3 models.
-- Select production model using:
-  - ranking consistency across reruns,
-  - schema compliance rate,
-  - explanation clarity without ranking drift.
+Gaps
+- data/jobs_40_client.json is not a valid job catalog yet (client_40 blocked).
+- Live multi-model explanation benchmark and production Sheets credentials are follow-up.
 
 ==================================================
 2) CLIENT VERSION (Non-technical)
 ==================================================
 
-What was improved
-- We standardized how the AI recommends careers so results are more consistent and easier to review.
+What was delivered
+- A career test flow: form answers in Google Sheets, automatic processing, top five job matches
+  with short reasons, and a results page.
 
-What is now fixed
-- Job ranking now follows one transparent scoring formula based on profile-to-job distance.
-- The AI still uses questionnaire meaning and job descriptions, but only to explain the results, not to change rank behind the scenes.
-- Close-score situations now follow a clear tie-break sequence.
+What is fixed
+- Ranking uses one transparent formula on six interest dimensions.
+- AI text explains matches; it does not change the order or scores.
+- Close results use a defined tie-break sequence.
 
-Why this matters
-- Better trust:
-  - rankings are reproducible and explainable.
-- Better quality control:
-  - outputs are easier to compare across AI models.
-- Better user clarity:
-  - top recommendations come with short, concrete reasons.
+Validation
+- Six benchmark profiles and automated tests on the core 30-job set.
+- Operator setup and sample data are documented in README.md.
 
-How we validate quality
-- We run the same profiles on two job datasets (core and extended).
-- We use six benchmark profiles covering different interest patterns.
-- We check both ranking consistency and explanation quality.
-
-Current status
-- The report is now fully aligned with the manual prompt template used for testing.
-- Next validation step is full cross-model benchmarking for production model selection.
-
+Next steps
+- Hook up the live spreadsheet, add the extended client job list, and choose the production
+  explanation model based on clarity and JSON reliability.

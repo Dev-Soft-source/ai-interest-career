@@ -1,20 +1,60 @@
-"""LLM system and user prompts — edit here to tune assessment tone and rules."""
+"""LLM prompts for explanation-only generation after Python ranking."""
 
-SYSTEM_PROMPT = """You are a career assessment engine. You receive questionnaire answers and a fixed job list.
-Score each job from 0 to 100 for fit based only on the answers (invent reasonable inferences if answers are brief).
-Pick the top 3 jobs by score (break ties by diversity of role types).
-Return ONLY valid JSON with no markdown fences, no commentary, matching this exact shape:
-{"scores": {"Job Title": 82, ...}, "top_jobs": [{"job": "Job Title", "score": 82, "reason": "One short sentence."}], "summary": "2-3 sentences overall."}
-Every job in job_list must appear in scores with an integer 0-100. top_jobs must have exactly 3 entries unless job_list has fewer than 3 jobs, then include all sorted by score."""
+from __future__ import annotations
+
+import json
+from typing import Any
+
+from models import DimensionVector, JobRecord, RankedJob
+
+EXPLANATION_SYSTEM_PROMPT = """You are a career-interest explanation writer.
+
+Ranking and numeric scores are already fixed by the application. Your job is to write clear,
+user-facing explanations only.
+
+Rules:
+- Do not change job order, job_id values, or scores.
+- Use questionnaire item meaning and job short_description to explain fit.
+- Each reason must mention at least two dimension themes and one meaningful preference pattern
+  from the questionnaire (grouped wording is fine; item codes are optional).
+- Keep each reason to 2-3 concise sentences.
+- Write summary in 2-4 short sentences for the respondent.
+- Return valid JSON only, with no markdown or extra text.
+
+Output shape:
+{"top_jobs": [{"job_id": "", "reason": ""}], "summary": ""}
+
+The top_jobs array must include exactly the provided job_id values, in the same order."""
 
 
-def build_user_prompt(answers: dict[str, str], job_list: list[str]) -> str:
-    import json
+def build_explanation_user_prompt(
+    answers: dict[str, str],
+    user_vector: DimensionVector,
+    ranked_jobs: list[RankedJob],
+    jobs_by_id: dict[str, JobRecord],
+) -> str:
+    ranked_payload: list[dict[str, Any]] = []
+    for ranked in ranked_jobs:
+        job = jobs_by_id[ranked.job_id]
+        ranked_payload.append(
+            {
+                "job_id": ranked.job_id,
+                "job_label": ranked.job_label,
+                "score": ranked.score,
+                "short_description": job.short_description,
+            }
+        )
 
-    payload = {"answers": answers, "job_list": job_list}
+    payload = {
+        "language": "English",
+        "response_mode": "strict_json",
+        "scoring_lock": "numeric_ranking_only",
+        "user_dimension_vector": user_vector.model_dump(),
+        "item_level_answers": answers,
+        "ranked_top_jobs": ranked_payload,
+    }
     return (
-        "User answers and job list (JSON):\n"
-        f"{json.dumps(payload, ensure_ascii=False)}\n\n"
-        "Task: score all jobs (0-100), pick top 3, give brief reasons, one overall summary. "
-        "Return JSON only."
+        "Write explanations for the ranked jobs below. Do not re-rank or rescore.\n"
+        f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n\n"
+        "Return JSON only in the schema defined by the system prompt."
     )

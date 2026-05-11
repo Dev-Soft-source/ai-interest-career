@@ -5,12 +5,65 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
-from backend.config import Settings, get_settings
-from backend.utils import normalize_email
+from config import Settings, get_settings
+from models import AssessmentResult
+from utils import normalize_email
 
 logger = logging.getLogger(__name__)
+
+MOCK_SAMPLE_1_ANSWERS: dict[str, str] = {
+    "A1": "1",
+    "A2": "2",
+    "A3": "0",
+    "A4": "0",
+    "A5": "2",
+    "A6": "3",
+    "A7": "0",
+    "A8": "0",
+    "B1": "4",
+    "B2": "4",
+    "B3": "4",
+    "B4": "4",
+    "B5": "3",
+    "B6": "3",
+    "B7": "2",
+    "B8": "2",
+    "C1": "2",
+    "C2": "2",
+    "C3": "4",
+    "C4": "4",
+    "C5": "1",
+    "C6": "1",
+    "C7": "1",
+    "C8": "1",
+    "D1": "0",
+    "D2": "0",
+    "D3": "1",
+    "D4": "1",
+    "D5": "1",
+    "D6": "0",
+    "D7": "0",
+    "D8": "0",
+    "E1": "2",
+    "E2": "2",
+    "E3": "1",
+    "E4": "2",
+    "E5": "1",
+    "E6": "2",
+    "E7": "1",
+    "E8": "1",
+    "F1": "2",
+    "F2": "3",
+    "F3": "3",
+    "F4": "3",
+    "F5": "2",
+    "F6": "2",
+    "F7": "2",
+    "F8": "2",
+}
 
 
 @dataclass
@@ -36,6 +89,14 @@ class SheetsClient:
         if not self.settings.spreadsheet_id:
             raise RuntimeError("SPREADSHEET_ID is not set")
 
+        cred_path = Path(self.settings.google_service_account_file)
+        if not cred_path.is_file():
+            raise RuntimeError(
+                f"Google service account file not found: {cred_path}. "
+                "Save the service account JSON there, set GOOGLE_SERVICE_ACCOUNT_FILE to its path, "
+                "or set USE_MOCK_SHEETS=true for local demo without Google Sheets."
+            )
+
         import gspread
         from google.oauth2.service_account import Credentials
 
@@ -44,7 +105,7 @@ class SheetsClient:
             "https://www.googleapis.com/auth/drive.readonly",
         ]
         creds = Credentials.from_service_account_file(
-            self.settings.google_service_account_file,
+            str(cred_path),
             scopes=scopes,
         )
         self._gc = gspread.authorize(creds)
@@ -54,6 +115,14 @@ class SheetsClient:
         gc = self._client()
         sh = gc.open_by_key(self.settings.spreadsheet_id)
         return sh.worksheet(self.settings.responses_sheet_name)
+
+    def _results_headers(self) -> list[str]:
+        return [
+            self.settings.results_email_column,
+            self.settings.results_user_vector_column,
+            self.settings.results_top_jobs_column,
+            self.settings.results_summary_column,
+        ]
 
     def _results_ws(self):
         gc = self._client()
@@ -66,14 +135,17 @@ class SheetsClient:
                 rows=1000,
                 cols=10,
             )
-            headers = [
-                self.settings.results_email_column,
-                self.settings.results_top_jobs_column,
-                self.settings.results_scores_column,
-                self.settings.results_summary_column,
-            ]
-            ws.append_row(headers)
+            ws.append_row(self._results_headers())
             return ws
+
+    def _validate_response_headers(self, headers: list[str]) -> None:
+        required = [self.settings.email_column, *self.settings.question_columns, self.settings.processed_column]
+        missing = [name for name in required if name not in headers]
+        if missing:
+            raise RuntimeError(
+                "Responses sheet row 1 is missing required headers: "
+                + ", ".join(missing)
+            )
 
     def list_response_rows(self) -> list[ResponseRow]:
         if self.settings.use_mock_sheets:
@@ -84,25 +156,17 @@ class SheetsClient:
         if not rows:
             return []
         headers = [h.strip() for h in rows[0]]
+        self._validate_response_headers(headers)
+
         email_col = self.settings.email_column
         proc_col = self.settings.processed_column
         qcols = self.settings.question_columns
 
-        def idx(name: str) -> int | None:
-            try:
-                return headers.index(name)
-            except ValueError:
-                return None
+        def idx(name: str) -> int:
+            return headers.index(name)
 
         email_i = idx(email_col)
-        if email_i is None:
-            raise RuntimeError(f'Responses sheet must include column "{email_col}"')
-
-        q_indices = {}
-        for q in qcols:
-            qi = idx(q)
-            if qi is not None:
-                q_indices[q] = qi
+        q_indices = {q: idx(q) for q in qcols}
         proc_i = idx(proc_col)
 
         out: list[ResponseRow] = []
@@ -115,9 +179,8 @@ class SheetsClient:
             answers: dict[str, str] = {}
             for q, qi in q_indices.items():
                 answers[q] = row[qi].strip() if qi < len(row) else ""
-            proc_val = None
-            if proc_i is not None and proc_i < len(row):
-                proc_val = row[proc_i].strip().lower() or None
+            proc_val = row[proc_i].strip().lower() if proc_i < len(row) else None
+            proc_val = proc_val or None
             out.append(ResponseRow(email=email, answers=answers, row_number=rnum, processed_raw=proc_val))
         return out
 
@@ -125,13 +188,14 @@ class SheetsClient:
         """Latest row wins if the same email appears more than once."""
         target = normalize_email(email)
         last: ResponseRow | None = None
-        for r in self.list_response_rows():
-            if normalize_email(r.email) == target:
-                last = r
+        for row in self.list_response_rows():
+            if normalize_email(row.email) == target:
+                last = row
         return last
 
     def mark_processed(self, row_number: int, value: str = "TRUE") -> None:
         if self.settings.use_mock_sheets:
+            _mock_mark_processed(row_number, value)
             return
         ws = self._responses_ws()
         headers = ws.row_values(1)
@@ -142,50 +206,38 @@ class SheetsClient:
             ws.update_cell(1, col, self.settings.processed_column)
         ws.update_cell(row_number, col, value)
 
-    def upsert_result(
-        self,
-        email: str,
-        top_jobs: list[dict[str, Any]],
-        scores: dict[str, int],
-        summary: str,
-    ) -> None:
+    def upsert_result(self, email: str, result: AssessmentResult) -> None:
+        top_jobs = [job.model_dump() for job in result.top_jobs]
+        payload_vector = json.dumps(result.user_dimension_vector.model_dump(), ensure_ascii=False)
         payload_top = json.dumps(top_jobs, ensure_ascii=False)
-        payload_scores = json.dumps(scores, ensure_ascii=False)
+        summary = result.summary
 
         if self.settings.use_mock_sheets:
-            _mock_save_result(self.settings, email, payload_top, payload_scores, summary)
+            _mock_save_result(self.settings, email, payload_vector, payload_top, summary)
             return
 
         ws = self._results_ws()
         rows = ws.get_all_values()
-        ec = self.settings.results_email_column
-        tc = self.settings.results_top_jobs_column
-        sc = self.settings.results_scores_column
-        smc = self.settings.results_summary_column
-        default_headers = [ec, tc, sc, smc]
-
-        if not rows:
-            ws.append_row(default_headers)
+        headers = [h.strip() for h in rows[0]] if rows else []
+        if not headers:
+            headers = self._results_headers()
+            ws.append_row(headers)
             rows = ws.get_all_values()
+            headers = [h.strip() for h in rows[0]]
 
-        headers = [h.strip() for h in rows[0]]
-        missing = [h for h in default_headers if h not in headers]
-        if missing:
-            raise RuntimeError(
-                f'Results sheet row 1 must include columns {default_headers}. Missing: {missing}'
-            )
-
-        def header_to_idx(name: str) -> int:
-            return headers.index(name)
+        for header in self._results_headers():
+            if header not in headers:
+                headers.append(header)
+                ws.update_cell(1, len(headers), header)
 
         values_by_header = {
-            ec: email,
-            tc: payload_top,
-            sc: payload_scores,
-            smc: summary,
+            self.settings.results_email_column: email,
+            self.settings.results_user_vector_column: payload_vector,
+            self.settings.results_top_jobs_column: payload_top,
+            self.settings.results_summary_column: summary,
         }
 
-        email_col_idx = header_to_idx(ec)
+        email_col_idx = headers.index(self.settings.results_email_column)
         email_norm = normalize_email(email)
         row_idx: int | None = None
         for i, row in enumerate(rows[1:], start=2):
@@ -225,17 +277,50 @@ class SheetsClient:
                 row.append("")
             if normalize_email(row[ei]) != target:
                 continue
-            data: dict[str, Any] = {}
             try:
-                data["email"] = row[col(self.settings.results_email_column)]
-                data["top_jobs"] = json.loads(row[col(self.settings.results_top_jobs_column)])
-                data["scores"] = json.loads(row[col(self.settings.results_scores_column)])
-                data["summary"] = row[col(self.settings.results_summary_column)]
-            except (ValueError, IndexError, json.JSONDecodeError) as e:
-                logger.warning("Bad results row for %s: %s", email, e)
+                return _parse_result_row(row, headers, self.settings)
+            except (ValueError, IndexError, json.JSONDecodeError) as exc:
+                logger.warning("Bad results row for %s: %s", email, exc)
                 return None
-            return data
         return None
+
+
+def _parse_result_row(row: list[str], headers: list[str], settings: Settings) -> dict[str, Any]:
+    def cell(name: str) -> str:
+        index = headers.index(name)
+        return row[index] if index < len(row) else ""
+
+    top_jobs_raw = json.loads(cell(settings.results_top_jobs_column))
+    top_jobs = [_normalize_top_job(item) for item in top_jobs_raw]
+    data: dict[str, Any] = {
+        "email": cell(settings.results_email_column),
+        "top_jobs": top_jobs,
+        "summary": cell(settings.results_summary_column),
+    }
+
+    vector_column = settings.results_user_vector_column
+    if vector_column in headers and cell(vector_column):
+        data["user_dimension_vector"] = json.loads(cell(vector_column))
+
+    return data
+
+
+def _normalize_top_job(item: dict[str, Any]) -> dict[str, Any]:
+    if "job_label" in item:
+        return {
+            "job_id": item.get("job_id", ""),
+            "job_label": item["job_label"],
+            "score": item.get("score", 0),
+            "reason": item.get("reason", ""),
+        }
+    if "job" in item:
+        return {
+            "job_id": item.get("job_id", ""),
+            "job_label": item["job"],
+            "score": item.get("score", 0),
+            "reason": item.get("reason", ""),
+        }
+    raise ValueError("top_jobs entry must include job_label or job")
 
 
 # --- mock store for local dev ---
@@ -247,10 +332,11 @@ _MOCK_ROWS_STATE: list[ResponseRow] | None = None
 def _mock_rows(settings: Settings) -> list[ResponseRow]:
     global _MOCK_ROWS_STATE
     if _MOCK_ROWS_STATE is None:
+        answers = {key: value for key, value in MOCK_SAMPLE_1_ANSWERS.items()}
         _MOCK_ROWS_STATE = [
             ResponseRow(
                 email="demo@example.com",
-                answers={"Q1": "A", "Q2": "B", "Q3": "C"},
+                answers=answers,
                 row_number=2,
                 processed_raw=None,
             )
@@ -258,17 +344,28 @@ def _mock_rows(settings: Settings) -> list[ResponseRow]:
     return _MOCK_ROWS_STATE
 
 
+def _mock_mark_processed(row_number: int, value: str) -> None:
+    global _MOCK_ROWS_STATE
+    if _MOCK_ROWS_STATE is None:
+        return
+    for row in _MOCK_ROWS_STATE:
+        if row.row_number == row_number:
+            row.processed_raw = value.strip().lower()
+            break
+
+
 def _mock_save_result(
     settings: Settings,
     email: str,
+    user_vector_json: str,
     top_jobs_json: str,
-    scores_json: str,
     summary: str,
 ) -> None:
+    top_jobs = json.loads(top_jobs_json)
     _MOCK_STORE[normalize_email(email)] = {
         "email": email,
-        "top_jobs": json.loads(top_jobs_json),
-        "scores": json.loads(scores_json),
+        "user_dimension_vector": json.loads(user_vector_json),
+        "top_jobs": [_normalize_top_job(item) for item in top_jobs],
         "summary": summary,
     }
 
