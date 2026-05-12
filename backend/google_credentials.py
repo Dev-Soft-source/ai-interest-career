@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from config import Settings
+from config import REPO_ROOT, Settings
 
 GOOGLE_SHEETS_SCOPES = (
     "https://www.googleapis.com/auth/spreadsheets",
@@ -19,9 +19,7 @@ def has_google_service_account_credentials(settings: Settings) -> bool:
         return True
     if _env_service_account_fields(settings):
         return True
-    if settings.google_service_account_file:
-        return Path(settings.google_service_account_file).is_file()
-    return False
+    return _credential_file_path(settings) is not None
 
 
 def load_google_credentials(settings: Settings):
@@ -85,11 +83,14 @@ def _service_account_info(settings: Settings) -> dict[str, Any] | None:
 
 
 def _credential_file_path(settings: Settings) -> Path | None:
-    if not settings.google_service_account_file:
-        return None
-    cred_path = Path(settings.google_service_account_file)
-    if cred_path.is_file():
-        return cred_path
+    if settings.google_service_account_file:
+        cred_path = Path(settings.google_service_account_file)
+        if cred_path.is_file():
+            return cred_path
+
+    default_path = REPO_ROOT / "secrets" / "service-account.json"
+    if default_path.is_file():
+        return default_path
     return None
 
 
