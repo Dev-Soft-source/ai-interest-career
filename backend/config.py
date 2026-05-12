@@ -9,7 +9,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from models import QUESTION_GROUPS
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+def _detect_repo_root() -> Path:
+    """Repo root locally (backend/ + data/); /app when backend is copied flat with data/."""
+    here = Path(__file__).resolve().parent
+    if (here / "data").is_dir():
+        return here
+    return here.parent
+
+
+REPO_ROOT = _detect_repo_root()
 
 
 def default_question_columns() -> list[str]:
