@@ -61,11 +61,7 @@ google-auth==2.48.0
 openai==2.32.0
 google-generativeai==0.8.6
 google-genai==2.0.1
-
-# IMPORTANT: stable grpc compatible with google-ai ecosystem
-grpcio==1.71.0
-grpcio-status==1.71.0
-protobuf>=5.26,<6
+google-api-python-client==2.196.0
 
 # =========================
 # DATA (LIGHTWEIGHT)
