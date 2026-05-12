@@ -1,28 +1,19 @@
-# Use Python 3.13 slim base
-FROM python:3.13-slim
+FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
+    build-essential \
     gcc \
-    libpq-dev \
+    g++ \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies and install
 COPY backend/requirements.txt /app/requirements.txt
+
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy backend code
-COPY backend /app/backend
+COPY backend /app
 
-# Set Python path
-ENV PYTHONPATH="${PYTHONPATH}:/app"
-
-# Expose FastAPI port
-EXPOSE 8000
-
-# Run FastAPI server
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
