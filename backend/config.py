@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from models import QUESTION_GROUPS
+from backend.models import QUESTION_GROUPS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 

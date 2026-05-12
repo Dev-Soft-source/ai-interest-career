@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 
-from config import Settings, get_settings, resolve_llm_provider
-from job_loader import load_jobs
-from models import (
+from backend.config import Settings, get_settings, resolve_llm_provider
+from backend.job_loader import load_jobs
+from backend.models import (
     AssessmentResult,
     LLMExplanationOutput,
     LLMOutput,
@@ -14,9 +14,9 @@ from models import (
     TopJob,
     TopJobResult,
 )
-from prompt_templates import EXPLANATION_SYSTEM_PROMPT, build_explanation_user_prompt
-from scorer import build_user_vector, rank_jobs
-from utils import extract_json_object, sanitize_user_facing_text
+from backend.prompt_templates import EXPLANATION_SYSTEM_PROMPT, build_explanation_user_prompt
+from backend.scorer import build_user_vector, rank_jobs
+from backend.utils import extract_json_object, sanitize_user_facing_text
 
 logger = logging.getLogger(__name__)
 

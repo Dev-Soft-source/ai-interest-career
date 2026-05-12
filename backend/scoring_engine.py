@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import logging
 
-from llm_service import call_assessment
-from models import AssessmentResult
-from response_validation import validate_response_answers
-from sheets_client import SheetsClient
+from backend.llm_service import call_assessment
+from backend.models import AssessmentResult
+from backend.response_validation import validate_response_answers
+from backend.sheets_client import SheetsClient
 
 logger = logging.getLogger(__name__)
 

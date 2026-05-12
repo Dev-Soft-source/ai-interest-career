@@ -6,8 +6,8 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from config import Settings
-from models import JobRecord
+from backend.config import Settings
+from backend.models import JobRecord
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_JOBS_RELATIVE = Path("data") / "jobs_30_core.json"

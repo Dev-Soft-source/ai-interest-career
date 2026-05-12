@@ -8,9 +8,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from config import Settings, get_settings
-from models import AssessmentResult
-from utils import normalize_email
+from backend.config import Settings, get_settings
+from backend.models import AssessmentResult
+from backend.utils import normalize_email
 
 logger = logging.getLogger(__name__)
 

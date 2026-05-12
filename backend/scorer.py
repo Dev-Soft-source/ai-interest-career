@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from models import DIMENSION_KEYS, QUESTION_GROUPS, DimensionVector, JobRecord, RankedJob
+from backend.models import DIMENSION_KEYS, QUESTION_GROUPS, DimensionVector, JobRecord, RankedJob
 
 
 def expected_question_keys() -> list[str]:
