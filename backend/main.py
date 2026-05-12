@@ -12,10 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from config import get_settings, resolve_job_set, settings_for_job_set
-from models import AssessmentResult, DimensionVector, JobSetName, ResultsResponse, TopJobResult
-from scoring_engine import assess_for_email
-from sheets_client import SheetsClient
+from backend.config import get_settings, resolve_job_set, settings_for_job_set
+from backend.models import AssessmentResult, DimensionVector, JobSetName, ResultsResponse, TopJobResult
+from backend.scoring_engine import assess_for_email
+from backend.sheets_client import SheetsClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
