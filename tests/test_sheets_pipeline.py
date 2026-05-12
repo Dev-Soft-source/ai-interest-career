@@ -8,7 +8,7 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from config import default_question_columns
 from response_validation import validate_response_answers
-from sheets_client import MOCK_SAMPLE_1_ANSWERS, _normalize_top_job, _parse_result_row
+from sheets_client import MOCK_SAMPLE_1_ANSWERS, SheetsClient, _normalize_top_job, _parse_result_row
 from config import Settings
 
 
@@ -52,6 +52,12 @@ def test_parse_result_row_reads_v2_fields():
     assert data["top_jobs"][0]["job_label"] == "Web Developer"
     assert data["top_jobs"][0]["score"] == 90
     assert data["user_dimension_vector"]["analysis_conceptual"] == 3.25
+
+
+def test_response_headers_without_processed_are_allowed():
+    client = SheetsClient(Settings())
+    headers = ["email", *default_question_columns()]
+    client._validate_response_headers(headers)
 
 
 def test_normalize_top_job_accepts_v2_shape():

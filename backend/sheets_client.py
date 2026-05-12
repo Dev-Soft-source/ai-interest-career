@@ -141,7 +141,7 @@ class SheetsClient:
             return ws
 
     def _validate_response_headers(self, headers: list[str]) -> None:
-        required = [self.settings.email_column, *self.settings.question_columns, self.settings.processed_column]
+        required = [self.settings.email_column, *self.settings.question_columns]
         missing = [name for name in required if name not in headers]
         if missing:
             raise RuntimeError(
@@ -169,7 +169,7 @@ class SheetsClient:
 
         email_i = idx(email_col)
         q_indices = {q: idx(q) for q in qcols}
-        proc_i = idx(proc_col)
+        proc_i = headers.index(proc_col) if proc_col in headers else None
 
         out: list[ResponseRow] = []
         for rnum, row in enumerate(rows[1:], start=2):
@@ -181,8 +181,9 @@ class SheetsClient:
             answers: dict[str, str] = {}
             for q, qi in q_indices.items():
                 answers[q] = row[qi].strip() if qi < len(row) else ""
-            proc_val = row[proc_i].strip().lower() if proc_i < len(row) else None
-            proc_val = proc_val or None
+            proc_val = None
+            if proc_i is not None and proc_i < len(row):
+                proc_val = row[proc_i].strip().lower() or None
             out.append(ResponseRow(email=email, answers=answers, row_number=rnum, processed_raw=proc_val))
         return out
 
