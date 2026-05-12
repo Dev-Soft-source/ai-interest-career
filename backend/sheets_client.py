@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from config import Settings, get_settings
-from google_credentials import has_google_service_account_credentials, load_google_credentials
 from models import AssessmentResult
 from utils import normalize_email
 

@@ -67,13 +67,6 @@ class Settings(BaseSettings):
     # Dev: skip Sheets and use sample data (see README)
     use_mock_sheets: bool = False
 
-    @field_validator("google_service_account_private_key", mode="before")
-    @classmethod
-    def normalize_private_key(cls, value: object) -> str | None:
-        if value is None or value == "":
-            return None
-        return str(value).replace("\\n", "\n")
-
     @field_validator("google_service_account_file", "jobs_file", mode="before")
     @classmethod
     def resolve_repo_relative_path(cls, value: object) -> str | None:
