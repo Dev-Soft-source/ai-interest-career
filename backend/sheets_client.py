@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
-from backend.config import Settings, get_settings
-from backend.models import AssessmentResult
-from backend.utils import normalize_email
+from config import Settings, get_settings
+from google_credentials import has_google_service_account_credentials, load_google_credentials
+from models import AssessmentResult
+from utils import normalize_email
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from backend.scorer import parse_item_score
+from scorer import parse_item_score
 
 
 def validate_response_answers(

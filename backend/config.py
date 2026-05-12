@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from backend.models import QUESTION_GROUPS
+from models import QUESTION_GROUPS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -66,6 +66,13 @@ class Settings(BaseSettings):
 
     # Dev: skip Sheets and use sample data (see README)
     use_mock_sheets: bool = False
+
+    @field_validator("google_service_account_private_key", mode="before")
+    @classmethod
+    def normalize_private_key(cls, value: object) -> str | None:
+        if value is None or value == "":
+            return None
+        return str(value).replace("\\n", "\n")
 
     @field_validator("google_service_account_file", "jobs_file", mode="before")
     @classmethod

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from backend.models import DimensionVector, JobRecord, RankedJob
+from models import DimensionVector, JobRecord, RankedJob
 
 EXPLANATION_SYSTEM_PROMPT = """You are a career-interest explanation writer.
 
