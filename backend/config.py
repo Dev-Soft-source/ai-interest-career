@@ -35,8 +35,15 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     llm_temperature: float = Field(default=0.3, ge=0.0, le=1.0)
 
-    # Google Sheets (service account JSON path)
+    # Google Sheets (service account JSON path or .env fields)
     google_service_account_file: str | None = None
+    google_service_account_json: str | None = None
+    google_service_account_type: str = "service_account"
+    google_service_account_project_id: str | None = None
+    google_service_account_private_key_id: str | None = None
+    google_service_account_private_key: str | None = None
+    google_service_account_client_email: str | None = None
+    google_service_account_client_id: str | None = None
     spreadsheet_id: str | None = None
     responses_sheet_name: str = "Responses"
     results_sheet_name: str = "Results"
@@ -66,6 +73,13 @@ class Settings(BaseSettings):
 
     # Dev: skip Sheets and use sample data (see README)
     use_mock_sheets: bool = False
+
+    @field_validator("google_service_account_private_key", mode="before")
+    @classmethod
+    def normalize_private_key(cls, value: object) -> str | None:
+        if value is None or value == "":
+            return None
+        return str(value).replace("\\n", "\n")
 
     @field_validator("google_service_account_file", "jobs_file", mode="before")
     @classmethod

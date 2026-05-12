@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from config import Settings, get_settings
+from google_credentials import has_google_service_account_credentials, load_google_credentials
 from models import AssessmentResult
 from utils import normalize_email
 
@@ -83,30 +84,18 @@ class SheetsClient:
             return None
         if self._gc is not None:
             return self._gc
-        if not self.settings.google_service_account_file:
-            raise RuntimeError("GOOGLE_SERVICE_ACCOUNT_FILE is not set (or enable USE_MOCK_SHEETS=true)")
+        if not has_google_service_account_credentials(self.settings):
+            raise RuntimeError(
+                "Google Sheets credentials are not configured. Set GOOGLE_SERVICE_ACCOUNT_* values in .env, "
+                "set GOOGLE_SERVICE_ACCOUNT_FILE to a JSON key file, or set USE_MOCK_SHEETS=true for local demo "
+                "without Google Sheets."
+            )
         if not self.settings.spreadsheet_id:
             raise RuntimeError("SPREADSHEET_ID is not set")
 
-        cred_path = Path(self.settings.google_service_account_file)
-        if not cred_path.is_file():
-            raise RuntimeError(
-                f"Google service account file not found: {cred_path}. "
-                "Save the service account JSON there, set GOOGLE_SERVICE_ACCOUNT_FILE to its path, "
-                "or set USE_MOCK_SHEETS=true for local demo without Google Sheets."
-            )
-
         import gspread
-        from google.oauth2.service_account import Credentials
 
-        scopes = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive.readonly",
-        ]
-        creds = Credentials.from_service_account_file(
-            str(cred_path),
-            scopes=scopes,
-        )
+        creds = load_google_credentials(self.settings)
         self._gc = gspread.authorize(creds)
         return self._gc
 
