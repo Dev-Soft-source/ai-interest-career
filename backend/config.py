@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     results_scores_column: str = "scores_json"
     results_summary_column: str = "summary"
     results_user_vector_column: str = "user_dimension_vector"
+    results_job_set_column: str = "job_set"
 
     # Jobs catalog (structured JSON with 6D vectors)
     jobs_file: str | None = None
@@ -89,6 +90,20 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def settings_for_job_set(
+    settings: Settings,
+    job_set: Literal["core_30", "client_40"] | None,
+) -> Settings:
+    if job_set is None:
+        return settings
+    return settings.model_copy(update={"job_set": job_set})
+
+
+def resolve_job_set(job_set: Literal["core_30", "client_40"] | None) -> Literal["core_30", "client_40"]:
+    settings = get_settings()
+    return job_set or settings.job_set
 
 
 def resolve_llm_provider(settings: Settings) -> str:

@@ -1,0 +1,274 @@
+Career Interest Matching Engine — Project Report
+Project: ai-interest-career
+Date: 2026-05-11
+Source of truth: docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md (v2)
+Repository root: ai-interest-career
+
+======================================================================
+1) EXECUTIVE SUMMARY (CLIENT)
+======================================================================
+
+The career interest test MVP uses one transparent matching rule. Questionnaire
+answers become a six-dimension profile. Jobs are ranked by numeric distance on
+those dimensions. An AI model writes short explanations for the top five
+matches. The AI does not change rank or score.
+
+Respondents complete a Tally form. Answers land in Google Sheets. A Python
+service processes each row, stores results, and serves a simple results page.
+Local development can run without Google Sheets using built-in sample data.
+
+Why this matters
+- Rankings are reproducible and auditable.
+- Explanations use questionnaire meaning and job descriptions without hidden
+  weighting.
+- The same profiles can be compared across AI providers because ranking is
+  fixed in code.
+
+Delivery status
+- 48-item questionnaire (A1..F8) and validation: DONE
+- Python scoring and tie-breaks: DONE
+- Gemini / OpenAI explanation step: DONE
+- Google Sheets read/write and mock mode: DONE
+- API and results UI (top 5 + summary): DONE
+- Automated tests and scorer benchmark: DONE
+- Operator documentation (README.md): DONE
+- Live Google Sheets integration (service account, tab names, Results tab): DONE
+  in development; production sign-off is operator follow-up
+- Extended 40-job client catalog (client_40): BLOCKED — placeholder file in repo
+- Live cross-model explanation benchmark: OPTIONAL follow-up
+
+======================================================================
+2) PRODUCT CONTRACT
+======================================================================
+
+Assessment shape
+- 48 items A1..F8, integers 0..4
+
+User profile
+- Six dimension means on a 0..4 scale, rounded to two decimals
+
+Job catalog
+- Structured JSON: job_id, job_label, six dimension scores, short_description
+
+Ranking
+- Python only: mean absolute distance per dimension, equal weight across six
+  dimensions
+
+User-facing output
+- Top 5 jobs with job_label, score, reason, plus summary
+
+LLM role
+- Explanations and summary only; order and scores fixed before the LLM call
+
+Default provider
+- Gemini (gemini-2.5-flash)
+
+Six dimensions (canonical order)
+1. creation_expression (A1..A8)
+2. analysis_conceptual (B1..B8)
+3. technical_manual (C1..C8)
+4. physical_bodily (D1..D8)
+5. social_collective (E1..E8)
+6. organization_management (F1..F8)
+
+Scoring formula
+- distance_d = abs(user_d - job_d)
+- mean_distance = average of the six distances
+- score = round((1 - mean_distance / 4) * 100)
+
+Tie-break
+- When ranks are close, ordering uses: lower maximum single-dimension gap;
+  lower gap on the user top-two dimensions; shorter short_description; stable
+  job_id ordering.
+
+======================================================================
+3) SYSTEM ARCHITECTURE
+======================================================================
+
+End-to-end flow
+
+  Tally form
+    -> Google Sheets (Responses tab)
+    -> sheets_client (read row by email)
+    -> response_validation (A1..F8, 0..4)
+    -> scorer (user vector, rank_jobs, top 5)
+    -> llm_service (Gemini or OpenAI explanations only)
+    -> Google Sheets (Results tab)
+    -> GET /api/results
+    -> results.html
+
+Results page behavior
+- GET /api/results?email=... loads stored JSON when present.
+- On 404, the page POSTs /api/process for that email and polls until results
+  exist.
+
+Processing sequence
+1. Read unprocessed rows from the configured Responses tab (email, A1..F8,
+   processed).
+2. Validate all 48 answers.
+3. Build user_dimension_vector.
+4. Load jobs from data/jobs_30_core.json unless JOBS_FILE or JOB_SET overrides.
+5. Rank jobs and take top 5.
+6. Call Gemini or OpenAI with ranked jobs, item-level answers, and job
+   short_description text.
+7. Merge LLM reason text onto fixed ranks; persist vector, top_jobs, and
+   summary to Results; set processed to TRUE on the response row.
+
+Main modules
+- Settings and env: backend/config.py, .env
+- Job catalog: backend/job_loader.py, data/jobs_30_core.json
+- Scoring: backend/scorer.py
+- Explanation prompts: backend/prompt_templates.py
+- LLM calls: backend/llm_service.py
+- Sheets I/O: backend/sheets_client.py
+- Orchestration: backend/scoring_engine.py
+- HTTP API: backend/main.py
+- Results UI: frontend/results.html
+
+API surface
+- GET /health — liveness
+- GET /api/results?email= — stored assessment JSON
+- POST /api/process — process one email or all pending rows
+- GET /results.html?email= — results page
+
+Results tab persistence
+- email
+- user_dimension_vector (JSON)
+- top_jobs (JSON: job_id, job_label, score, reason)
+- summary
+
+Legacy rows that used job instead of job_label are still readable.
+
+======================================================================
+4) ALIGNMENT WITH MANUAL TEMPLATE V2
+======================================================================
+
+The manual template describes a full JSON contract for model-in-the-loop
+testing (annex, notes_for_reviewers, and LLM-computed ranking). The production
+application implements the same numeric model and explanation policy with a
+narrower runtime contract.
+
+Manual template (testing)          | Production application
+-----------------------------------|------------------------------------------
+Model may return full assessment   | Python computes ranks; LLM returns
+JSON                               | top_jobs reasons + summary only
+top_5 with audit in                | mean_distance kept in scorer; not exposed
+notes_for_reviewers                | on API or UI
+annex and reviewer notes           | Not stored in Sheets or API
+Six samples x two job sets         | Scorer benchmark on core_30; client_40
+                                   | catalog not yet valid
+
+Semantic rules preserved
+- Item-level patterns inform reasons.
+- Dimensions are not reweighted in prose.
+- Close-score behavior is deterministic in code.
+
+======================================================================
+5) VALIDATION AND QUALITY ASSURANCE
+======================================================================
+
+Automated tests
+- 22 tests passing (pytest tests)
+- User vector construction and 0..4 validation
+- Distance formula and tie-break ordering
+- Six benchmark profiles vs jobs_30_core.json
+- Mock Sheets pipeline and API (POST /api/process, GET /api/results)
+- LLM service with mocked Gemini/OpenAI (same ranks, merged reasons)
+
+Scorer benchmark
+- scripts/run_benchmark.py writes data/benchmark_results/scorer_core_30.json
+- Six manual sample profiles on the core 30-job set
+
+Sample assets
+- data/benchmark_samples.json — six benchmark answer profiles
+- data/sample_responses_row2_sample1.csv — sample Responses row for Sheets
+- data/test_answers.example.json — local answers template
+- scripts/try_llm.py — end-to-end or --scores-only check
+
+Not yet completed
+- Valid data/jobs_40_client.json job catalog (current file is not a job list)
+- Full A/B run: six samples x two job sets with live LLM calls across models
+- Formal production sign-off on Tally -> Sheets -> deploy with client-owned
+  credentials
+
+======================================================================
+6) OPERATIONS
+======================================================================
+
+Local run (repository root)
+
+  python -m uvicorn main:app --app-dir backend --reload --host 0.0.0.0 --port 8000
+
+Use Uvicorn for /api/* and the results page. A static file server alone cannot
+run the full flow.
+
+Environment (high level)
+- GEMINI_API_KEY or OPENAI_API_KEY for explanations
+- GOOGLE_SERVICE_ACCOUNT_FILE and SPREADSHEET_ID for live Sheets
+- RESPONSES_SHEET_NAME and RESULTS_SHEET_NAME must match spreadsheet tab names
+  exactly (Tally or imports may use names other than Responses)
+- USE_MOCK_SHEETS=true for local demo without Google (sample email:
+  demo@example.com only)
+- USE_MOCK_SHEETS=false for live Sheets; restart Uvicorn after .env changes
+
+Live Google Sheets checklist
+1. Service account JSON under secrets/ (gitignored); path resolves from repo root.
+2. Share the spreadsheet with the service account client_email as Editor.
+3. Enable Google Sheets API on the Google Cloud project.
+4. Responses tab row 1: email, A1..F8, processed.
+5. Results tab row 1: email, user_dimension_vector, top_jobs, summary.
+6. Open results.html?email=... with an email that exists on the Responses tab.
+
+Tally redirect (example)
+  https://your-domain.com/results.html?email={field:email}
+
+======================================================================
+7) KNOWN GAPS AND RECOMMENDED NEXT STEPS
+======================================================================
+
+1. Replace data/jobs_40_client.json with a proper extended catalog; enable
+   JOB_SET=client_40.
+2. Run live explanation benchmarks (JSON validity, clarity, tone) across chosen
+   models; ranking stays identical across providers.
+3. Complete client production wiring: Tally export headers, spreadsheet sharing,
+   deployed host, HTTPS.
+4. Optional: expose reviewer-oriented audit fields if internal QA needs parity
+   with the manual JSON schema.
+
+======================================================================
+8) DOCUMENTATION MAP
+======================================================================
+
+README.md
+  Setup, env vars, Sheets layout, API, live vs mock mode
+
+docs/MIGRATION_TODO.md
+  Implementation checklist (sections 1..8 complete)
+
+docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md
+  Prompt and scoring specification
+
+docs/PROJECT_REPORT.txt
+  This report (plain text)
+
+docs/SYSTEM_PROMPT_REPORT.txt
+  Short alignment summary (technical + client)
+
+career_interest_mvp.md
+  Legacy MVP note with pointers to current docs
+
+======================================================================
+9) CLIENT SUMMARY (NON-TECHNICAL)
+======================================================================
+
+We standardized how career recommendations are produced so results are easier
+to trust and review. Job order comes from one transparent formula based on how
+close a person's interest profile is to each role on six dimensions. The AI
+still uses the questionnaire and job descriptions, but only to explain the
+results — not to change rank behind the scenes.
+
+Close scores follow a clear tie-break sequence. The product shows the top five
+roles with short reasons and an overall summary. Quality is checked with six
+benchmark profiles and automated tests. Remaining work is mainly finishing the
+extended client job list and formal production sign-off on the live form-to-
+results path.

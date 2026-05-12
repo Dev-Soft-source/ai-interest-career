@@ -16,7 +16,7 @@ from models import (
 )
 from prompt_templates import EXPLANATION_SYSTEM_PROMPT, build_explanation_user_prompt
 from scorer import build_user_vector, rank_jobs
-from utils import extract_json_object
+from utils import extract_json_object, sanitize_user_facing_text
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def call_assessment(answers: dict[str, str], settings: Settings | None = None) -
     return AssessmentResult(
         user_dimension_vector=user_vector,
         top_jobs=top_jobs,
-        summary=explained.summary.strip(),
+        summary=sanitize_user_facing_text(explained.summary.strip()),
     )
 
 
@@ -67,7 +67,7 @@ def _merge_explanations(
     merged: list[TopJobResult] = []
 
     for job in ranked:
-        reason = reasons.get(job.job_id, "").strip()
+        reason = sanitize_user_facing_text(reasons.get(job.job_id, "").strip())
         if not reason:
             raise ValueError(f'Missing explanation for job_id "{job.job_id}"')
         merged.append(

@@ -1,7 +1,7 @@
 Career Interest Matching Engine — Alignment Summary
 Project: ai-interest-career
 Date: 2026-05-11
-Full report: docs/PROJECT_REPORT.md
+Full report: docs/PROJECT_REPORT.txt
 Source of truth: docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md (v2)
 
 ==================================================
@@ -9,31 +9,38 @@ Source of truth: docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md (v2)
 ==================================================
 
 Objective
-- Deliver MVP aligned with manual template v2: A1..F8 questionnaire, six-dimension job vectors,
-  numeric ranking lock, top_5 output, and explanation-only LLM role.
+- Deliver MVP aligned with manual template v2: A1..F8 questionnaire, six-dimension
+  job vectors, numeric ranking lock, top_5 output, and explanation-only LLM role.
 
 Implementation
-- Python scorer (backend/scorer.py): user vector from 48 items, mean-distance score, tie-break.
-- Explanation prompts (backend/prompt_templates.py); Gemini/OpenAI (backend/llm_service.py).
-- Sheets pipeline (backend/sheets_client.py): Responses A1..F8, Results vector + top_jobs + summary.
+- Python scorer (backend/scorer.py): user vector from 48 items, mean-distance
+  score, tie-break.
+- Explanation prompts (backend/prompt_templates.py); Gemini/OpenAI
+  (backend/llm_service.py).
+- Sheets pipeline (backend/sheets_client.py): Responses A1..F8, Results vector
+  + top_jobs + summary; tab names from .env must match the spreadsheet exactly.
 - API v2 (backend/main.py); results UI (frontend/results.html).
-- Tests: 22 passing; scorer benchmark via scripts/run_benchmark.py -> data/benchmark_results/.
+- Tests: 22 passing; scorer benchmark via scripts/run_benchmark.py ->
+  data/benchmark_results/.
 
 Production vs manual JSON
-- Runtime stores user_dimension_vector, top_jobs (job_id, job_label, score, reason), summary.
-- Manual annex / notes_for_reviewers are for model testing, not persisted in MVP API or Sheets.
+- Runtime stores user_dimension_vector, top_jobs (job_id, job_label, score,
+  reason), summary.
+- Manual annex / notes_for_reviewers are for model testing, not persisted in MVP
+  API or Sheets.
 
 Gaps
 - data/jobs_40_client.json is not a valid job catalog yet (client_40 blocked).
-- Live multi-model explanation benchmark and production Sheets credentials are follow-up.
+- Live multi-model explanation benchmark and client production sign-off are
+  follow-up.
 
 ==================================================
 2) CLIENT VERSION (Non-technical)
 ==================================================
 
 What was delivered
-- A career test flow: form answers in Google Sheets, automatic processing, top five job matches
-  with short reasons, and a results page.
+- A career test flow: form answers in Google Sheets, automatic processing, top
+  five job matches with short reasons, and a results page.
 
 What is fixed
 - Ranking uses one transparent formula on six interest dimensions.
@@ -45,5 +52,5 @@ Validation
 - Operator setup and sample data are documented in README.md.
 
 Next steps
-- Hook up the live spreadsheet, add the extended client job list, and choose the production
-  explanation model based on clarity and JSON reliability.
+- Finish the extended client job list and complete production sign-off on the
+  live spreadsheet and explanation model.

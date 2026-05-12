@@ -106,6 +106,38 @@
       color: var(--muted);
       margin-top: 0.35rem;
     }
+    .job-set-picker {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .job-set-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .job-set-option:hover,
+    .job-set-option.is-selected {
+      border-color: var(--accent);
+      background: #1f2a36;
+    }
+    .job-set-option input {
+      margin-top: 0.2rem;
+      accent-color: var(--accent);
+    }
+    .job-set-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.15rem;
+    }
+    .job-set-file {
+      display: block;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
   </style>
 </head>
 <body>
@@ -119,17 +151,51 @@
       const params = new URLSearchParams(window.location.search);
       const email = params.get("email");
       const app = document.getElementById("app");
+      const jobSetOptions = [
+        { value: "core_30", label: "Core 30 jobs", file: "jobs_30_core.json" },
+        { value: "client_40", label: "Client 40 jobs", file: "jobs_40_client.json" },
+      ];
+      let selectedJobSet = params.get("job_set") === "client_40" ? "client_40" : "core_30";
+      let activeRequest = 0;
 
       function apiBase() {
         return "";
       }
 
+      function isValidJobSet(value) {
+        return value === "core_30" || value === "client_40";
+      }
+
+      function syncJobSetToUrl() {
+        const next = new URLSearchParams(window.location.search);
+        next.set("job_set", selectedJobSet);
+        const query = next.toString();
+        const nextUrl = window.location.pathname + (query ? "?" + query : "");
+        window.history.replaceState(null, "", nextUrl);
+      }
+
+      function renderJobSetPicker() {
+        let html = '<div class="card"><h2 style="margin:0 0 1rem;font-size:1.1rem;font-weight:600;">Job catalog</h2><div class="job-set-picker">';
+        jobSetOptions.forEach(function (option) {
+          const checked = option.value === selectedJobSet ? " checked" : "";
+          const selectedClass = option.value === selectedJobSet ? " is-selected" : "";
+          html += '<label class="job-set-option' + selectedClass + '">' +
+            '<input type="radio" name="job_set" value="' + option.value + '"' + checked + ">" +
+            '<span><span class="job-set-label">' + escapeHtml(option.label) + "</span>" +
+            '<span class="job-set-file">' + escapeHtml(option.file) + "</span></span></label>";
+        });
+        html += "</div></div>";
+        return html;
+      }
+
       function renderLoading(msg) {
-        app.innerHTML = '<div class="state">' + (msg || "Loading results…") + "</div>";
+        app.innerHTML = renderJobSetPicker() + '<div class="state">' + (msg || "Loading results…") + "</div>";
+        bindJobSetPicker();
       }
 
       function renderError(msg) {
-        app.innerHTML = '<div class="state error">' + msg + "</div>";
+        app.innerHTML = renderJobSetPicker() + '<div class="state error">' + msg + "</div>";
+        bindJobSetPicker();
       }
 
       function jobLabel(job) {
@@ -138,7 +204,7 @@
 
       function renderData(data) {
         const jobs = data.top_jobs || [];
-        let html = "";
+        let html = renderJobSetPicker();
         if (data.email) {
           html += '<span class="email-badge">' + escapeHtml(data.email) + "</span>";
         }
@@ -150,6 +216,7 @@
         });
         html += "</ul></div>";
         app.innerHTML = html;
+        bindJobSetPicker();
       }
 
       function escapeHtml(s) {
@@ -160,34 +227,45 @@
           .replace(/"/g, "&quot;");
       }
 
-      async function fetchResults() {
-        const r = await fetch(apiBase() + "/api/results?email=" + encodeURIComponent(email));
-        if (r.ok) return r.json();
-        if (r.status === 404) return null;
-        const err = await r.json().catch(function () { return {}; });
-        throw new Error(err.detail || r.statusText || "Request failed");
+      function bindJobSetPicker() {
+        const inputs = app.querySelectorAll('input[name="job_set"]');
+        inputs.forEach(function (input) {
+          input.onchange = function () {
+            if (!isValidJobSet(input.value) || input.value === selectedJobSet) {
+              return;
+            }
+            selectedJobSet = input.value;
+            syncJobSetToUrl();
+            loadResults();
+          };
+        });
       }
 
-      async function triggerProcess() {
-        const r = await fetch(apiBase() + "/api/process", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email }),
-        });
+      async function fetchResults() {
+        const query = "email=" + encodeURIComponent(email) + "&job_set=" + encodeURIComponent(selectedJobSet);
+        const r = await fetch(apiBase() + "/api/results?" + query);
         if (!r.ok) {
           const err = await r.json().catch(function () { return {}; });
-          throw new Error(err.detail || r.statusText || "Process failed");
+          throw new Error(err.detail || r.statusText || "Request failed");
         }
         return r.json();
       }
 
-      async function poll(maxTries, delayMs) {
-        for (var i = 0; i < maxTries; i++) {
+      async function loadResults() {
+        const requestId = ++activeRequest;
+        renderLoading("Loading results…");
+        try {
           var data = await fetchResults();
-          if (data) return data;
-          await new Promise(function (res) { setTimeout(res, delayMs); });
+          if (requestId !== activeRequest) {
+            return;
+          }
+          renderData(data);
+        } catch (e) {
+          if (requestId !== activeRequest) {
+            return;
+          }
+          renderError(e.message || String(e));
         }
-        return null;
       }
 
       if (!email) {
@@ -195,33 +273,8 @@
         return;
       }
 
-      renderLoading("Loading results…");
-
-      (async function () {
-        try {
-          var data = await fetchResults();
-          if (!data) {
-            renderLoading("No results yet — generating…");
-            var proc = await triggerProcess();
-            if (proc.errors && proc.errors.length && !(proc.processed && proc.processed.length)) {
-              throw new Error(proc.errors.map(function (e) { return e.error || JSON.stringify(e); }).join(" "));
-            }
-            data = await fetchResults();
-            if (!data) {
-              data = await poll(10, 1500);
-            }
-          }
-          if (!data) {
-            app.innerHTML = '<div class="state">Results are not ready yet. You can try again in a moment.' +
-              '</div><button class="btn" type="button" id="retry">Retry</button>';
-            document.getElementById("retry").onclick = function () { location.reload(); };
-            return;
-          }
-          renderData(data);
-        } catch (e) {
-          renderError(e.message || String(e));
-        }
-      })();
+      syncJobSetToUrl();
+      loadResults();
     })();
   </script>
 </body>

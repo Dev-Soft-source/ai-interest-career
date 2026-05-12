@@ -12,9 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from config import get_settings
-from models import DimensionVector, ProcessRequest, ProcessSummary, ResultsResponse, TopJobResult
-from scoring_engine import process_pending
+from config import get_settings, resolve_job_set, settings_for_job_set
+from models import AssessmentResult, DimensionVector, JobSetName, ResultsResponse, TopJobResult
+from scoring_engine import assess_for_email
 from sheets_client import SheetsClient
 
 logging.basicConfig(level=logging.INFO)
@@ -50,11 +50,13 @@ def to_results_response(raw: dict[str, Any]) -> ResultsResponse:
     vector = None
     if raw.get("user_dimension_vector"):
         vector = DimensionVector.model_validate(raw["user_dimension_vector"])
+    job_set = raw.get("job_set")
     return ResultsResponse(
         email=raw["email"],
         user_dimension_vector=vector,
         top_jobs=top_jobs,
         summary=raw["summary"],
+        job_set=job_set,
     )
 
 
@@ -76,35 +78,44 @@ def _normalize_top_job(item: dict[str, Any]) -> dict[str, Any]:
     raise ValueError("top_jobs entry must include job_label or job")
 
 
+def _assessment_to_raw(email: str, result: AssessmentResult, job_set: JobSetName) -> dict[str, Any]:
+    return {
+        "email": email,
+        "user_dimension_vector": result.user_dimension_vector.model_dump(),
+        "top_jobs": [job.model_dump() for job in result.top_jobs],
+        "summary": result.summary,
+        "job_set": job_set,
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 
 @app.get("/api/results", response_model=ResultsResponse)
-def get_results(email: str = Query(..., description="Respondent email (same as in Tally / Sheets)")):
-    settings = get_settings()
+def get_results(
+    email: str = Query(..., description="Respondent email (same as in Tally / Sheets)"),
+    job_set: JobSetName | None = Query(
+        None,
+        description="Job catalog: core_30 (jobs_30_core.json) or client_40 (jobs_40_client.json)",
+    ),
+):
+    resolved_job_set = resolve_job_set(job_set)
+    settings = settings_for_job_set(get_settings(), resolved_job_set)
     sheets = SheetsClient(settings)
-    raw = sheets.get_result_by_email(email)
-    if not raw:
-        raise HTTPException(
-            status_code=404,
-            detail="No results yet for this email. Submit the form, then run POST /api/process or wait for processing.",
-        )
+    try:
+        result = assess_for_email(sheets, email)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Failed to assess %s", email)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    raw = _assessment_to_raw(email, result, resolved_job_set)
     try:
         return to_results_response(raw)
     except ValueError as exc:
-        raise HTTPException(status_code=500, detail=f"Stored results are invalid: {exc}") from exc
-
-
-@app.post("/api/process", response_model=ProcessSummary)
-def post_process(body: ProcessRequest | None = None):
-    """Process unprocessed response rows (optionally filter by email)."""
-    settings = get_settings()
-    sheets = SheetsClient(settings)
-    email = body.email if body else None
-    result = process_pending(sheets, email=email)
-    return ProcessSummary(processed=result["processed"], errors=result["errors"])
+        raise HTTPException(status_code=500, detail=f"Invalid assessment payload: {exc}") from exc
 
 
 def _results_page_path() -> Path | None:

@@ -2,6 +2,8 @@
 
 from typing import Any, Literal
 
+JobSetName = Literal["core_30", "client_40"]
+
 from pydantic import BaseModel, Field, field_validator
 
 DIMENSION_KEYS: tuple[str, ...] = (
@@ -101,21 +103,13 @@ class LLMOutput(BaseModel):
     summary: str
 
 
-class ProcessRequest(BaseModel):
-    email: str | None = None
-
-
 class ResultsResponse(BaseModel):
     email: str
     user_dimension_vector: DimensionVector | None = None
     top_jobs: list[TopJobResult]
     summary: str
+    job_set: JobSetName | None = None
 
 
 class ErrorResponse(BaseModel):
     detail: str
-
-
-class ProcessSummary(BaseModel):
-    processed: list[str]
-    errors: list[dict[str, Any]]

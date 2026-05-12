@@ -132,6 +132,7 @@ class SheetsClient:
     def _results_headers(self) -> list[str]:
         return [
             self.settings.results_email_column,
+            self.settings.results_job_set_column,
             self.settings.results_user_vector_column,
             self.settings.results_top_jobs_column,
             self.settings.results_summary_column,
@@ -229,6 +230,8 @@ class SheetsClient:
             _mock_save_result(self.settings, email, payload_vector, payload_top, summary)
             return
 
+        job_set = self.settings.job_set
+
         ws = self._results_ws()
         rows = ws.get_all_values()
         headers = [h.strip() for h in rows[0]] if rows else []
@@ -245,21 +248,32 @@ class SheetsClient:
 
         values_by_header = {
             self.settings.results_email_column: email,
+            self.settings.results_job_set_column: job_set,
             self.settings.results_user_vector_column: payload_vector,
             self.settings.results_top_jobs_column: payload_top,
             self.settings.results_summary_column: summary,
         }
 
         email_col_idx = headers.index(self.settings.results_email_column)
+        job_set_col_idx = (
+            headers.index(self.settings.results_job_set_column)
+            if self.settings.results_job_set_column in headers
+            else None
+        )
         email_norm = normalize_email(email)
         row_idx: int | None = None
         for i, row in enumerate(rows[1:], start=2):
             if not row:
                 continue
             padded = list(row) + [""] * (len(headers) - len(row))
-            if normalize_email(padded[email_col_idx]) == email_norm:
-                row_idx = i
-                break
+            if normalize_email(padded[email_col_idx]) != email_norm:
+                continue
+            if job_set_col_idx is not None:
+                stored_job_set = padded[job_set_col_idx].strip() or "core_30"
+                if stored_job_set != job_set:
+                    continue
+            row_idx = i
+            break
 
         if row_idx is None:
             new_row = [values_by_header.get(h, "") for h in headers]
@@ -283,6 +297,8 @@ class SheetsClient:
             return headers.index(name)
 
         ei = col(self.settings.results_email_column)
+        job_set_column = self.settings.results_job_set_column
+        job_set_idx = headers.index(job_set_column) if job_set_column in headers else None
         for row in rows[1:]:
             if not row:
                 continue
@@ -290,6 +306,12 @@ class SheetsClient:
                 row.append("")
             if normalize_email(row[ei]) != target:
                 continue
+            if job_set_idx is not None:
+                while len(row) <= job_set_idx:
+                    row.append("")
+                stored_job_set = row[job_set_idx].strip() or "core_30"
+                if stored_job_set != self.settings.job_set:
+                    continue
             try:
                 return _parse_result_row(row, headers, self.settings)
             except (ValueError, IndexError, json.JSONDecodeError) as exc:
@@ -314,6 +336,12 @@ def _parse_result_row(row: list[str], headers: list[str], settings: Settings) ->
     vector_column = settings.results_user_vector_column
     if vector_column in headers and cell(vector_column):
         data["user_dimension_vector"] = json.loads(cell(vector_column))
+
+    job_set_column = settings.results_job_set_column
+    if job_set_column in headers and cell(job_set_column):
+        data["job_set"] = cell(job_set_column)
+    else:
+        data["job_set"] = settings.job_set
 
     return data
 
@@ -367,6 +395,10 @@ def _mock_mark_processed(row_number: int, value: str) -> None:
             break
 
 
+def _mock_result_key(email: str, job_set: str) -> str:
+    return f"{normalize_email(email)}|{job_set}"
+
+
 def _mock_save_result(
     settings: Settings,
     email: str,
@@ -375,8 +407,9 @@ def _mock_save_result(
     summary: str,
 ) -> None:
     top_jobs = json.loads(top_jobs_json)
-    _MOCK_STORE[normalize_email(email)] = {
+    _MOCK_STORE[_mock_result_key(email, settings.job_set)] = {
         "email": email,
+        "job_set": settings.job_set,
         "user_dimension_vector": json.loads(user_vector_json),
         "top_jobs": [_normalize_top_job(item) for item in top_jobs],
         "summary": summary,
@@ -384,4 +417,4 @@ def _mock_save_result(
 
 
 def _mock_get_result(settings: Settings, email: str) -> dict[str, Any] | None:
-    return _MOCK_STORE.get(normalize_email(email))
+    return _MOCK_STORE.get(_mock_result_key(email, settings.job_set))
