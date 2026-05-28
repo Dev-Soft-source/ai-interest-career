@@ -6,39 +6,65 @@ Prompt and scoring rules follow [docs/MANUAL_CHATGPT_PROMPT_TEMPLATE.md](docs/MA
 
 ## How it works
 
-1. A respondent completes the Tally form; Tally appends one row to the configured **Responses** tab (`email`, **A1–F8**, `processed`).
-2. **`POST /api/process`** reads unprocessed rows, validates answers, builds a six-dimension profile, ranks jobs from the configured catalog, calls the LLM for explanations only, writes **Results**, and sets **`processed`** to `TRUE`.
-3. **`GET /api/results?email=...`** returns stored JSON for that email.
-4. **`/results.html?email=...`** loads the results page. It calls **`GET /api/results`** first; on **404**, it triggers **`POST /api/process`** for that email and polls until results exist.
+1. A respondent completes the Tally form; Tally appends one row to the configured **Responses** tab (`email`, **A1–F8**; **`processed`** is optional).
+2. **`GET /api/results?email=&job_set=`** reads that row from Sheets, validates answers, ranks jobs in Python, calls the LLM for French explanations only, returns JSON, and may write a copy to the **Results** tab.
+3. **`/results.html?email=...`** loads the results page and calls the API (same origin when you use Uvicorn as below).
 
 Ranking is deterministic in code. The LLM does not change job order or scores.
 
-## Run locally
+## Run on localhost
 
-From the repository root:
+Do everything from the **repository root** (`ai-interest-career/`). Do not use `python -m http.server` alone — it cannot serve `/api/*`.
+
+### 1. One-time setup
 
 ```powershell
+cd D:\Task\Upwork\Belgium\ai-interest-career
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r backend\requirements.txt
 copy .env.example .env
 ```
 
-On **cmd.exe**, activate with `\.venv\Scripts\activate.bat`.
+On **cmd.exe**: `\.venv\Scripts\activate.bat`
 
-Edit `.env`: set **`GEMINI_API_KEY`** (recommended) or **`OPENAI_API_KEY`**. For live Google Sheets, also set **`GOOGLE_SERVICE_ACCOUNT_FILE`**, **`SPREADSHEET_ID`**, and tab names (see below). Restart Uvicorn after changing `.env`.
+### 2. Configure `.env`
 
-Start the API and results UI with Uvicorn. Do not use `python -m http.server` for the full flow; the static server cannot handle `/api/*`.
+Minimum for a quick test (no Google):
+
+```env
+GEMINI_API_KEY=your_key_here
+USE_MOCK_SHEETS=true
+```
+
+For **live Google Sheets**, also set `SPREADSHEET_ID`, `RESPONSES_SHEET_NAME`, `RESULTS_SHEET_NAME`, and service account fields (see below). Set `USE_MOCK_SHEETS=false`.
+
+Restart the server after any `.env` change.
+
+### 3. Start the server
 
 ```powershell
 python -m uvicorn main:app --app-dir backend --reload --host 0.0.0.0 --port 8000
 ```
 
+Keep this terminal open. You should see `Uvicorn running on http://0.0.0.0:8000`.
+
+### 4. Open in the browser
+
+| URL | Purpose |
+|-----|---------|
+| http://localhost:8000/health | API alive (`{"status":"ok"}`) |
+| http://localhost:8000/results.html?email=demo@example.com | Mock demo (needs `USE_MOCK_SHEETS=true`) |
+| http://localhost:8000/results.html?email=you@example.com&job_set=core_30 | Live row from Sheets |
+| http://localhost:8000/results.html?email=you@example.com&job_set=client_40 | Extended job catalog |
+
+The page and API must share the same host (`localhost:8000`) so the browser can call `/api/results`.
+
 ### Demo without Google Sheets
 
-Set **`USE_MOCK_SHEETS=true`** in `.env`. Mock mode serves one sample **A1–F8** row for **`demo@example.com`** only. You still need a valid LLM API key.
+Set **`USE_MOCK_SHEETS=true`** in `.env`. Mock mode serves one sample **A1–F8** row for **`demo@example.com`** only. You still need a valid **`GEMINI_API_KEY`** (or OpenAI).
 
-To use real Sheets again, set **`USE_MOCK_SHEETS=false`**, configure the Google variables below, and restart Uvicorn.
+### Live Google Sheets on localhost
 
 ### Live Google Sheets
 
@@ -47,7 +73,7 @@ To use real Sheets again, set **`USE_MOCK_SHEETS=false`**, configure the Google 
 3. Share the target spreadsheet with the service account **`client_email`** as **Editor**.
 4. Set **`SPREADSHEET_ID`** to that spreadsheet’s ID.
 5. Set **`RESPONSES_SHEET_NAME`** and **`RESULTS_SHEET_NAME`** to the **exact** tab names in the file. Tally or an import may use a name other than `Responses` (for example a CSV filename).
-6. On the **Responses** tab, row 1 must include **`email`**, **`A1` … `F8`**, and **`processed`**. On **Results**, create row 1 with **`email`**, **`user_dimension_vector`**, **`top_jobs`**, and **`summary`** if the tab does not exist yet.
+6. On the **Responses** tab, row 1 must include **`email`** and **`A1` … `F8`** (`processed` optional). On **Results**, create row 1 with **`email`**, **`user_dimension_vector`**, **`top_jobs`**, and **`summary`** if the tab does not exist yet.
 7. Open the results page with an **email** that exists on the Responses tab, for example `http://localhost:8000/results.html?email=demo1@example.com`.
 
 If a tab name in `.env` does not match the spreadsheet, the API error lists the tab names that were found.
@@ -69,7 +95,7 @@ python -m pytest tests
 | `GEMINI_API_KEY` / `OPENAI_API_KEY` | LLM credentials |
 | `GEMINI_MODEL` / `OPENAI_MODEL` | Model name (`gemini-2.5-flash` by default) |
 | `LLM_TEMPERATURE` | Explanation temperature (default `0.3`) |
-| `GOOGLE_SERVICE_ACCOUNT_FILE` | Service account JSON path |
+| `GOOGLE_SERVICE_ACCOUNT_*` | Service account fields in `.env`, or `GOOGLE_SERVICE_ACCOUNT_FILE`, or default `secrets/service-account.json` |
 | `SPREADSHEET_ID` | Target spreadsheet |
 | `RESPONSES_SHEET_NAME` / `RESULTS_SHEET_NAME` | Tab names (must match the spreadsheet exactly) |
 | `EMAIL_COLUMN` / `PROCESSED_COLUMN` | Responses headers |
@@ -84,7 +110,7 @@ python -m pytest tests
 
 ### Responses
 
-Row 1 must include **`email`**, **`A1` … `F8`**, and **`processed`**. Answer cells use integers **0–4**. Leave **`processed`** empty or `FALSE` until a row has been scored.
+Row 1 must include **`email`** and **`A1` … `F8`**. **`processed`** is optional. Answer cells use integers **0–4**.
 
 Import helper: [data/sample_responses_row2_sample1.csv](data/sample_responses_row2_sample1.csv).
 
@@ -116,9 +142,8 @@ Legacy rows that store `job` instead of `job_label` are still read by the API.
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/health` | Liveness check |
-| `GET` | `/api/results?email=` | v2 JSON: `email`, optional `user_dimension_vector`, `top_jobs`, `summary` |
-| `POST` | `/api/process` | Optional body `{"email":"x@y.com"}` for one respondent, or `{}` for all unprocessed rows |
-| `GET` | `/results.html` | Results UI (`?email=` required) |
+| `GET` | `/api/results?email=&job_set=` | Run assessment; JSON: `email`, `user_dimension_vector`, `top_jobs`, `summary`, `job_set` |
+| `GET` | `/results.html` | Results UI (`?email=` required; optional `job_set=core_30` or `client_40`) |
 
 ## Where to change behavior
 

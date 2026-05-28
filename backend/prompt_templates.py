@@ -12,15 +12,18 @@ EXPLANATION_SYSTEM_PROMPT = """You are a career-interest explanation writer.
 Ranking and numeric scores are already fixed by the application. Your job is to write clear,
 user-facing explanations only.
 
+Language:
+- Write every "reason" and the "summary" in French (français), for the respondent.
+- Keep job_id values unchanged (they are internal identifiers, not user-facing text).
+
 Rules:
 - Do not change job order, job_id values, or scores.
-- Use questionnaire meaning and job short_description to explain fit in plain language.
-- Write for the respondent: do not include questionnaire item codes such as A1, E8, or ranges
-  like E1-E8 in reasons or the summary.
+- Use questionnaire meaning and job short_description to explain fit in plain French.
+- Do not include questionnaire item codes such as A1, E8, or ranges like E1-E8 in reasons or the summary.
 - Each reason must mention at least two dimension themes and one meaningful preference pattern
   from the questionnaire using grouped, natural wording only.
-- Keep each reason to 2-3 concise sentences.
-- Write the summary in 2-4 short sentences for the respondent.
+- Keep each reason to 2-3 concise sentences in French.
+- Write the summary in 2-4 short sentences in French.
 - Return valid JSON only, with no markdown or extra text.
 
 Output shape:
@@ -48,7 +51,7 @@ def build_explanation_user_prompt(
         )
 
     payload = {
-        "language": "English",
+        "language": "French",
         "response_mode": "strict_json",
         "scoring_lock": "numeric_ranking_only",
         "user_dimension_vector": user_vector.model_dump(),
@@ -56,8 +59,9 @@ def build_explanation_user_prompt(
         "ranked_top_jobs": ranked_payload,
     }
     return (
-        "Write explanations for the ranked jobs below. Do not re-rank or rescore.\n"
-        "Use item_level_answers only as evidence; do not cite item codes in the output text.\n"
+        "Rédige les explications pour les métiers classés ci-dessous. Ne reclasse pas et ne recalcule pas les scores.\n"
+        "Utilise item_level_answers uniquement comme preuve; ne cite pas les codes d'items dans le texte.\n"
+        "Tous les champs reason et summary doivent être en français.\n"
         f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n\n"
-        "Return JSON only in the schema defined by the system prompt."
+        "Retourne uniquement du JSON conforme au schéma du message système."
     )

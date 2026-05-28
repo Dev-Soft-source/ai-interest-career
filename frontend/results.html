@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Your career interest results</title>
+  <title>Vos résultats d'intérêts professionnels</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
@@ -142,8 +142,8 @@
 </head>
 <body>
   <main>
-    <h1>Your career matches</h1>
-    <p class="sub">Based on your questionnaire answers.</p>
+    <h1>Vos métiers correspondants</h1>
+    <p class="sub">D'après vos réponses au questionnaire.</p>
     <div id="app"></div>
   </main>
   <script>
@@ -152,8 +152,8 @@
       const email = params.get("email");
       const app = document.getElementById("app");
       const jobSetOptions = [
-        { value: "core_30", label: "Core 30 jobs", file: "jobs_30_core.json" },
-        { value: "client_40", label: "Client 40 jobs", file: "jobs_40_client.json" },
+        { value: "core_30", label: "30 métiers — catalogue de base", file: "jobs_30_core.json" },
+        { value: "client_40", label: "40 métiers — catalogue client", file: "jobs_40_client.json" },
       ];
       let selectedJobSet = params.get("job_set") === "client_40" ? "client_40" : "core_30";
       let activeRequest = 0;
@@ -175,7 +175,7 @@
       }
 
       function renderJobSetPicker() {
-        let html = '<div class="card"><h2 style="margin:0 0 1rem;font-size:1.1rem;font-weight:600;">Job catalog</h2><div class="job-set-picker">';
+        let html = '<div class="card"><h2 style="margin:0 0 1rem;font-size:1.1rem;font-weight:600;">Catalogue de métiers</h2><div class="job-set-picker">';
         jobSetOptions.forEach(function (option) {
           const checked = option.value === selectedJobSet ? " checked" : "";
           const selectedClass = option.value === selectedJobSet ? " is-selected" : "";
@@ -209,7 +209,7 @@
           html += '<span class="email-badge">' + escapeHtml(data.email) + "</span>";
         }
         html += '<div class="card summary">' + escapeHtml(data.summary || "") + "</div>";
-        html += '<div class="card"><h2 style="margin:0 0 1rem;font-size:1.1rem;font-weight:600;">Top 5 matches</h2><ul class="jobs">';
+        html += '<div class="card"><h2 style="margin:0 0 1rem;font-size:1.1rem;font-weight:600;">Top 5 des correspondances</h2><ul class="jobs">';
         jobs.forEach(function (j) {
           html += "<li><div class=\"score\">" + Number(j.score) + '</div><div><p class="job-title">' +
             escapeHtml(jobLabel(j)) + '</p><p class="reason">' + escapeHtml(j.reason || "") + "</p></div></li>";
@@ -253,7 +253,7 @@
 
       async function loadResults() {
         const requestId = ++activeRequest;
-        renderLoading("Loading results…");
+        renderLoading("Chargement des résultats…");
         try {
           var data = await fetchResults();
           if (requestId !== activeRequest) {
