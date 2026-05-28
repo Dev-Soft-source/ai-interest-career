@@ -10,11 +10,11 @@
       "social_collective": 2,
       "organization_management": 3
     },
-    "short_description": "Manual and technical work with materials, creating objects, managing a small workshop or craft business."
+    "short_description": "Travail manuel et technique sur les matériaux, création d'objets, gestion d'un petit atelier ou d'une entreprise artisanale."
   },
   {
     "job_id": "INFIRMIER",
-    "job_label": "Nurse",
+    "job_label": "Infirmier·ère",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 2,
@@ -23,11 +23,11 @@
       "social_collective": 4,
       "organization_management": 3
     },
-    "short_description": "Provides technical and relational care to patients, works within a healthcare team, organizes and coordinates care."
+    "short_description": "Dispense des soins techniques et relationnels aux patients, travaille en équipe de soins, organise et coordonne les prises en charge."
   },
   {
     "job_id": "DEV_WEB",
-    "job_label": "Web Developer",
+    "job_label": "Développeur·se web",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 4,
@@ -36,11 +36,11 @@
       "social_collective": 2,
       "organization_management": 2
     },
-    "short_description": "Designs and develops websites or web applications, analyzes needs, codes and maintains technical solutions."
+    "short_description": "Conçoit et développe des sites ou applications web, analyse les besoins, programme et maintient les solutions techniques."
   },
   {
     "job_id": "CHEF_PROJET",
-    "job_label": "Project Manager",
+    "job_label": "Chef·fe de projet",
     "scores": {
       "creation_expression": 2,
       "analysis_conceptual": 3,
@@ -49,11 +49,11 @@
       "social_collective": 3,
       "organization_management": 4
     },
-    "short_description": "Leads projects from start to finish, coordinates teams, manages schedule, budget, quality, and communication with stakeholders."
+    "short_description": "Pilote des projets de bout en bout, coordonne les équipes, gère planning, budget, qualité et communication avec les parties prenantes."
   },
   {
     "job_id": "PROFESSEUR",
-    "job_label": "Teacher",
+    "job_label": "Enseignant·e",
     "scores": {
       "creation_expression": 2,
       "analysis_conceptual": 3,
@@ -62,11 +62,11 @@
       "social_collective": 4,
       "organization_management": 3
     },
-    "short_description": "Teaches a subject to students, transmits knowledge, supports learning, and organizes lessons and assessments."
+    "short_description": "Enseigne une matière aux élèves ou étudiants, transmet des connaissances, accompagne l'apprentissage et organise cours et évaluations."
   },
   {
     "job_id": "AIDE_SOIGNANT",
-    "job_label": "Nursing Assistant",
+    "job_label": "Aide-soignant·e",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 1,
@@ -75,11 +75,11 @@
       "social_collective": 4,
       "organization_management": 2
     },
-    "short_description": "Provides hygiene and comfort care, assists with daily tasks, works closely with patients under nurse supervision."
+    "short_description": "Assure les soins d'hygiène et de confort, aide aux gestes du quotidien, travaille au contact des patients sous la supervision des infirmiers."
   },
   {
     "job_id": "EDUCATEUR_SPEC",
-    "job_label": "Special Education Worker",
+    "job_label": "Éducateur·rice spécialisé·e",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 2,
@@ -88,11 +88,11 @@
       "social_collective": 4,
       "organization_management": 3
     },
-    "short_description": "Supports young people or adults in difficulty, develops educational projects, works with families and institutions."
+    "short_description": "Accompagne des jeunes ou adultes en difficulté, élabore des projets éducatifs, collabore avec les familles et les institutions."
   },
   {
     "job_id": "ASSISTANT_SOCIAL",
-    "job_label": "Social Worker",
+    "job_label": "Assistant·e social·e",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 2,
@@ -101,11 +101,11 @@
       "social_collective": 4,
       "organization_management": 3
     },
-    "short_description": "Helps people access their rights and find social solutions, provides long-term support and coordinates with various stakeholders."
+    "short_description": "Aide les personnes à faire valoir leurs droits et à trouver des solutions sociales, assure un suivi dans la durée et coordonne les acteurs."
   },
   {
     "job_id": "PSYCHOLOGUE",
-    "job_label": "Psychologist",
+    "job_label": "Psychologue",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 3,
@@ -114,11 +114,11 @@
       "social_collective": 4,
       "organization_management": 2
     },
-    "short_description": "Conducts clinical interviews, listens and analyzes psychological situations, offers insights and support."
+    "short_description": "Mène des entretiens cliniques, écoute et analyse des situations psychologiques, propose des pistes de compréhension et d'accompagnement."
   },
   {
     "job_id": "CIP",
-    "job_label": "Career Counselor",
+    "job_label": "Conseiller·ère en insertion professionnelle",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 2,
@@ -127,11 +127,11 @@
       "social_collective": 4,
       "organization_management": 3
     },
-    "short_description": "Supports people toward employment or training, leads workshops, tracks progress, and coordinates with companies and organizations."
+    "short_description": "Accompagne vers l'emploi ou la formation, anime des ateliers, suit les parcours et coordonne entreprises et organismes."
   },
   {
     "job_id": "FORMATEUR",
-    "job_label": "Trainer",
+    "job_label": "Formateur·rice",
     "scores": {
       "creation_expression": 2,
       "analysis_conceptual": 3,
@@ -140,11 +140,11 @@
       "social_collective": 4,
       "organization_management": 3
     },
-    "short_description": "Designs and delivers training for adults, adapts content to audiences, and organizes learning sessions."
+    "short_description": "Conçoit et dispense des formations pour adultes, adapte les contenus aux publics et organise les sessions d'apprentissage."
   },
   {
     "job_id": "COACH_SPORTIF",
-    "job_label": "Fitness Coach",
+    "job_label": "Coach sportif",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 1,
@@ -153,11 +153,11 @@
       "social_collective": 4,
       "organization_management": 2
     },
-    "short_description": "Guides individuals or groups in sports activities, sets goals, and motivates them to improve safely."
+    "short_description": "Encadre des personnes ou groupes en activité physique, fixe des objectifs et motive à progresser en toute sécurité."
   },
   {
     "job_id": "ANIMATEUR_SC",
-    "job_label": "Community Activity Leader",
+    "job_label": "Animateur·rice socioculturel·le",
     "scores": {
       "creation_expression": 2,
       "analysis_conceptual": 1,
@@ -166,11 +166,11 @@
       "social_collective": 4,
       "organization_management": 2
     },
-    "short_description": "Organizes and leads activities for various audiences, builds social connections, and encourages community participation."
+    "short_description": "Organise et anime des activités pour différents publics, crée du lien social et favorise la participation collective."
   },
   {
     "job_id": "RESP_PEDAGO",
-    "job_label": "Educational Manager",
+    "job_label": "Responsable pédagogique",
     "scores": {
       "creation_expression": 2,
       "analysis_conceptual": 3,
@@ -179,11 +179,11 @@
       "social_collective": 3,
       "organization_management": 4
     },
-    "short_description": "Leads training programs, coordinates trainers, organizes learning paths, and ensures educational quality."
+    "short_description": "Dirige des dispositifs de formation, coordonne les formateurs, organise les parcours et veille à la qualité pédagogique."
   },
   {
     "job_id": "COORD_EQUIPE",
-    "job_label": "Team Coordinator",
+    "job_label": "Coordinateur·rice d'équipe",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 2,
@@ -192,11 +192,11 @@
       "social_collective": 3,
       "organization_management": 4
     },
-    "short_description": "Organizes daily team work, assigns tasks, monitors activity, and liaises with management."
+    "short_description": "Organise le travail quotidien de l'équipe, répartit les tâches, suit l'activité et fait le lien avec la direction."
   },
   {
     "job_id": "RESP_PLANNING",
-    "job_label": "Scheduling Manager",
+    "job_label": "Responsable planning",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 2,
@@ -205,11 +205,11 @@
       "social_collective": 2,
       "organization_management": 4
     },
-    "short_description": "Creates and adjusts schedules for teams or resources, manages constraints and unexpected events."
+    "short_description": "Élabore et ajuste les plannings d'équipes ou de ressources, gère les contraintes et les imprévus."
   },
   {
     "job_id": "LOGISTICIEN",
-    "job_label": "Logistics Specialist",
+    "job_label": "Logisticien·ne",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 2,
@@ -218,11 +218,11 @@
       "social_collective": 2,
       "organization_management": 4
     },
-    "short_description": "Plans and optimizes the flow of goods or materials, manages stock, transport, and deadlines."
+    "short_description": "Planifie et optimise les flux de marchandises ou de matériaux, gère stocks, transport et délais."
   },
   {
     "job_id": "CONSULTANT",
-    "job_label": "Consultant",
+    "job_label": "Consultant·e",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 3,
@@ -231,11 +231,11 @@
       "social_collective": 3,
       "organization_management": 3
     },
-    "short_description": "Analyzes organizational or market situations, advises clients, and recommends improvements."
+    "short_description": "Analyse des situations organisationnelles ou de marché, conseille les clients et recommande des améliorations."
   },
   {
     "job_id": "DATA_ANALYST",
-    "job_label": "Data Analyst",
+    "job_label": "Analyste de données",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 4,
@@ -244,11 +244,11 @@
       "social_collective": 2,
       "organization_management": 2
     },
-    "short_description": "Collects, cleans, and analyzes data to produce indicators and dashboards for decision-making."
+    "short_description": "Collecte, nettoie et analyse des données pour produire des indicateurs et tableaux de bord utiles à la décision."
   },
   {
     "job_id": "CHARGE_ETUDES",
-    "job_label": "Research Analyst",
+    "job_label": "Chargé·e d'études",
     "scores": {
       "creation_expression": 1,
       "analysis_conceptual": 4,
@@ -257,11 +257,11 @@
       "social_collective": 2,
       "organization_management": 3
     },
-    "short_description": "Designs and conducts studies (surveys, statistical analyses, reports) to support decisions."
+    "short_description": "Conçoit et réalise des études (enquêtes, analyses statistiques, rapports) pour éclairer les décisions."
   },
   {
     "job_id": "TECH_MAINT",
-    "job_label": "Maintenance Technician",
+    "job_label": "Technicien·ne de maintenance",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 2,
@@ -270,11 +270,11 @@
       "social_collective": 2,
       "organization_management": 2
     },
-    "short_description": "Maintains and repairs equipment, diagnoses breakdowns, and restores machines to operation."
+    "short_description": "Entretient et répare les équipements, diagnostique les pannes et remet les machines en service."
   },
   {
     "job_id": "CUISINIER",
-    "job_label": "Cook",
+    "job_label": "Cuisinier·ère",
     "scores": {
       "creation_expression": 2,
       "analysis_conceptual": 1,
@@ -283,11 +283,11 @@
       "social_collective": 2,
       "organization_management": 2
     },
-    "short_description": "Prepares dishes in a professional kitchen, handles ingredients, follows hygiene standards, and organizes the workstation."
+    "short_description": "Prépare des plats en cuisine professionnelle, travaille les ingrédients, respecte l'hygiène et organise le poste."
   },
   {
     "job_id": "TECH_INFO",
-    "job_label": "IT Technician",
+    "job_label": "Technicien·ne informatique",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 3,
@@ -296,11 +296,11 @@
       "social_collective": 2,
       "organization_management": 2
     },
-    "short_description": "Installs, configures, and troubleshoots computers, networks, or servers, and provides technical support."
+    "short_description": "Installe, configure et dépanne ordinateurs, réseaux ou serveurs, et assure le support technique."
   },
   {
     "job_id": "GRAPHISTE",
-    "job_label": "Graphic Designer",
+    "job_label": "Graphiste",
     "scores": {
       "creation_expression": 4,
       "analysis_conceptual": 1,
@@ -309,11 +309,11 @@
       "social_collective": 2,
       "organization_management": 1
     },
-    "short_description": "Creates visual materials (posters, logos, communication media), translating ideas into images."
+    "short_description": "Crée des supports visuels (affiches, logos, médias de communication) en traduisant des idées en images."
   },
   {
     "job_id": "UX_UI",
-    "job_label": "UX/UI Designer",
+    "job_label": "Concepteur·trice UX/UI",
     "scores": {
       "creation_expression": 3,
       "analysis_conceptual": 3,
@@ -322,11 +322,11 @@
       "social_collective": 2,
       "organization_management": 2
     },
-    "short_description": "Designs user interfaces and experiences, combining user needs, ergonomics, and aesthetics."
+    "short_description": "Conçoit les interfaces et l'expérience utilisateur en combinant besoins, ergonomie et esthétique."
   },
   {
     "job_id": "REDACTEUR_CM",
-    "job_label": "Content Writer / Content Manager",
+    "job_label": "Rédacteur·rice / gestionnaire de communauté",
     "scores": {
       "creation_expression": 4,
       "analysis_conceptual": 2,
@@ -335,11 +335,11 @@
       "social_collective": 3,
       "organization_management": 2
     },
-    "short_description": "Creates and manages written content for web or social media, adapting tone and managing editorial calendars."
+    "short_description": "Crée et gère des contenus rédactionnels pour le web ou les réseaux sociaux, adapte le ton et pilote le calendrier éditorial."
   },
   {
     "job_id": "PRODUCT_OWNER",
-    "job_label": "Product Owner",
+    "job_label": "Chef·fe de produit",
     "scores": {
       "creation_expression": 2,
       "analysis_conceptual": 3,
@@ -348,11 +348,11 @@
       "social_collective": 3,
       "organization_management": 4
     },
-    "short_description": "Owns the vision of a digital product, prioritizes backlog, balances needs, and works with developers to deliver value."
+    "short_description": "Porte la vision d'un produit numérique, priorise le carnet de produit, arbitre les besoins et collabore avec les développeurs pour délivrer de la valeur."
   },
   {
     "job_id": "TESTEUR_LOGICIEL",
-    "job_label": "Software Tester",
+    "job_label": "Testeur·se logiciel",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 3,
@@ -361,11 +361,11 @@
       "social_collective": 2,
       "organization_management": 2
     },
-    "short_description": "Designs and runs application tests, identifies and documents bugs, and contributes to product quality."
+    "short_description": "Conçoit et exécute des tests d'applications, identifie et documente les anomalies, contribue à la qualité du produit."
   },
   {
     "job_id": "MEDIATEUR_CULT",
-    "job_label": "Cultural Mediator",
+    "job_label": "Médiateur·rice culturel·le",
     "scores": {
       "creation_expression": 2,
       "analysis_conceptual": 2,
@@ -374,11 +374,11 @@
       "social_collective": 4,
       "organization_management": 2
     },
-    "short_description": "Builds connections between audiences and cultural venues, organizes activities, and facilitates understanding of artworks."
+    "short_description": "Crée des liens entre publics et lieux culturels, organise des activités et facilite la compréhension des œuvres."
   },
   {
     "job_id": "TECH_FOREST",
-    "job_label": "Forestry Technician",
+    "job_label": "Technicien·ne forestier·ère",
     "scores": {
       "creation_expression": 0,
       "analysis_conceptual": 2,
@@ -387,6 +387,6 @@
       "social_collective": 1,
       "organization_management": 2
     },
-    "short_description": "Manages and maintains forest areas, monitors conditions, organizes fieldwork, and ensures environmental protection."
+    "short_description": "Gère et entretient les espaces forestiers, suit l'état des peuplements, organise le travail de terrain et veille à la protection de l'environnement."
   }
 ]
