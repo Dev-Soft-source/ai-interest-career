@@ -111,7 +111,7 @@ Changing the job catalog on the results page triggers a new assessment for that 
 | Sheets I/O | `backend/sheets_client.py` |
 | Orchestration | `backend/scoring_engine.py` |
 | HTTP API | `backend/main.py` |
-| Results UI | `frontend/results.html`, `frontend/index.html` |
+| Results UI | `frontend/results.html` |
 
 **API surface**
 

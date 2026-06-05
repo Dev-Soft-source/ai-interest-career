@@ -34,7 +34,7 @@ def _refresh_settings() -> None:
 
 origins = [
    "https://ai-interest-career.onrender.com",  # frontend ngrok URL
-   # "http://localhost:3000",  # frontend ngrok URL
+   #"http://localhost:8000",  # frontend ngrok URL
 ]
 
 app.add_middleware(
@@ -99,7 +99,18 @@ def health():
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
-    return Response(status_code=204)
+    path = FRONTEND_DIR / "favicon.ico"
+    if path.is_file():
+        return FileResponse(path, media_type="image/x-icon")
+    return Response(status_code=404)
+
+
+@app.get("/apple-touch-icon.png", include_in_schema=False)
+def apple_touch_icon():
+    path = FRONTEND_DIR / "apple-touch-icon.png"
+    if path.is_file():
+        return FileResponse(path, media_type="image/png")
+    return Response(status_code=404)
 
 
 @app.get("/api/results", response_model=ResultsResponse)
@@ -128,11 +139,8 @@ def get_results(
 
 
 def _results_page_path() -> Path | None:
-    for name in ("results.html", "index.html"):
-        path = FRONTEND_DIR / name
-        if path.is_file():
-            return path
-    return None
+    path = FRONTEND_DIR / "results.html"
+    return path if path.is_file() else None
 
 
 @app.get("/results.html")

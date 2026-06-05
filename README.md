@@ -167,7 +167,7 @@ Legacy rows that store `job` instead of `job_label` are still read by the API.
 | Provider, models, sheet names | `.env`, `backend/config.py` |
 | Sheet read/write | `backend/sheets_client.py` |
 | Orchestration | `backend/scoring_engine.py` |
-| Results UI | `frontend/results.html` (source: `frontend/index.html`) |
+| Results UI | `frontend/results.html` |
 
 ## Tally redirect
 

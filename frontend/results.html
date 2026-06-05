@@ -3,354 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#07090f" />
+  <meta name="description" content="Découvrez vos métiers correspondants d'après votre test d'intérêts professionnels." />
   <title>Vos résultats d'intérêts professionnels</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #0f1419;
-      --card: #1a222d;
-      --muted: #8b9aab;
-      --text: #e8eef5;
-      --accent: #5eead4;
-      --accent-dim: #2dd4bf33;
-      --border: #2a3544;
-      --error: #f87171;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: "DM Sans", system-ui, sans-serif;
-      background: radial-gradient(1200px 600px at 20% -10%, #1e3a5f55, transparent),
-                  radial-gradient(800px 400px at 100% 0%, #134e4a44, transparent),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-    main {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 2.5rem 1.25rem 4rem;
-    }
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin: 0 0 0.5rem;
-    }
-    .sub {
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin-bottom: 2rem;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.5rem 1.5rem 1.25rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 12px 40px #00000040;
-    }
-    .summary {
-      font-size: 1.05rem;
-    }
-    .jobs { list-style: none; padding: 0; margin: 0; }
-    .jobs li {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 0.75rem 1rem;
-      align-items: start;
-      padding: 1rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .jobs li:last-child { border-bottom: none; padding-bottom: 0; }
-    .score {
-      font-weight: 700;
-      font-size: 1.35rem;
-      color: var(--accent);
-      min-width: 3.25rem;
-      text-align: center;
-      background: var(--accent-dim);
-      border-radius: 10px;
-      padding: 0.35rem 0.5rem;
-      line-height: 1.2;
-    }
-    .job-title { font-weight: 600; font-size: 1.05rem; margin: 0 0 0.25rem; }
-    .reason { color: var(--muted); font-size: 0.92rem; margin: 0; }
-    .state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--muted);
-    }
-    .state.error { color: var(--error); }
-    .loader-panel {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1.75rem;
-      min-height: 220px;
-      padding: 3rem 1.5rem;
-      overflow: hidden;
-    }
-    .loader-caption {
-      margin: 0;
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--muted);
-      letter-spacing: 0.01em;
-      animation: loader-caption 2.4s ease-in-out infinite;
-    }
-    .loader-visual {
-      position: relative;
-      width: 88px;
-      height: 88px;
-    }
-    .loader-glow {
-      position: absolute;
-      inset: 12px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #5eead422 0%, transparent 70%);
-      animation: loader-pulse 2.4s ease-in-out infinite;
-    }
-    .loader-ring {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      border: 2px solid transparent;
-    }
-    .loader-ring--outer {
-      border-top-color: var(--accent);
-      border-right-color: #5eead455;
-      animation: loader-spin 1.15s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-    }
-    .loader-ring--inner {
-      inset: 14px;
-      border-bottom-color: #5eead499;
-      border-left-color: #5eead433;
-      animation: loader-spin 1.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite reverse;
-    }
-    .loader-core {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 10px;
-      height: 10px;
-      margin: -5px 0 0 -5px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 20px #5eead4aa, 0 0 40px #5eead444;
-      animation: loader-core 2.4s ease-in-out infinite;
-    }
-    .loader-orbit {
-      position: absolute;
-      inset: 0;
-      animation: loader-spin 3.2s linear infinite;
-    }
-    .loader-orbit span {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 6px;
-      height: 6px;
-      margin: -3px 0 0 -3px;
-      border-radius: 50%;
-      background: var(--accent);
-      opacity: 0.35;
-      transform: rotate(var(--angle)) translateY(-38px);
-      animation: loader-dot 2.4s ease-in-out infinite;
-      animation-delay: var(--delay);
-    }
-    .loader-orbit span:nth-child(1) { --angle: 0deg;   --delay: 0s;    opacity: 1; }
-    .loader-orbit span:nth-child(2) { --angle: 72deg;  --delay: 0.15s; }
-    .loader-orbit span:nth-child(3) { --angle: 144deg; --delay: 0.3s;  }
-    .loader-orbit span:nth-child(4) { --angle: 216deg; --delay: 0.45s; }
-    .loader-orbit span:nth-child(5) { --angle: 288deg; --delay: 0.6s;  }
-    @keyframes loader-caption {
-      0%, 100% { opacity: 0.55; }
-      50% { opacity: 1; }
-    }
-    @keyframes loader-spin {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes loader-pulse {
-      0%, 100% { transform: scale(0.92); opacity: 0.5; }
-      50% { transform: scale(1.08); opacity: 1; }
-    }
-    @keyframes loader-core {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(0.85); opacity: 0.7; }
-    }
-    @keyframes loader-dot {
-      0%, 100% { opacity: 0.35; box-shadow: 0 0 0 transparent; }
-      50% { opacity: 1; box-shadow: 0 0 10px #5eead488; }
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      padding: 0.6rem 1.1rem;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      color: var(--text);
-      font-family: inherit;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-    .btn:hover { border-color: var(--accent); color: var(--accent); }
-    .email-badge {
-      display: inline-block;
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-top: 0.35rem;
-    }
-    .job-set-picker {
-      display: grid;
-      gap: 0.75rem;
-    }
-    .job-set-option {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      padding: 0.85rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
-    }
-    .job-set-option:hover,
-    .job-set-option.is-selected {
-      border-color: var(--accent);
-      background: #1f2a36;
-    }
-    .job-set-option input {
-      margin-top: 0.2rem;
-      accent-color: var(--accent);
-    }
-    .job-set-label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 0.15rem;
-    }
-    .job-set-file {
-      display: block;
-      color: var(--muted);
-      font-size: 0.88rem;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 </head>
 <body>
-  <main>
-    <h1>Vos métiers correspondants</h1>
-    <p class="sub">D'après vos réponses au questionnaire.</p>
+  <div class="page-bg" aria-hidden="true">
+    <span class="bg-orb bg-orb--teal"></span>
+    <span class="bg-orb bg-orb--indigo"></span>
+    <span class="bg-orb bg-orb--mint"></span>
+  </div>
+
+  <header class="site-header">
+    <a class="brand" href="/results.html" aria-label="Accueil résultats">
+      <span class="brand-mark" aria-hidden="true">
+        <img src="/apple-touch-icon.png" width="36" height="36" alt="" />
+      </span>
+      <span class="brand-text">
+        <span class="brand-name">Intérêts Pro</span>
+        <span class="brand-tag">Orientation professionnelle</span>
+      </span>
+    </a>
+    <span class="header-pill">Résultats</span>
+  </header>
+
+  <main class="container">
+    <div class="page-hero">
+      <h1>Vos métiers correspondants</h1>
+      <p>Analyse personnalisée d'après vos réponses au questionnaire d'intérêts.</p>
+    </div>
     <div id="app"></div>
   </main>
+
+  <footer class="site-footer">
+    Résultats générés à partir de votre profil d'intérêts — A à F.
+  </footer>
+
+  <script src="/static/app.js"></script>
   <script>
-    (function () {
-      const params = new URLSearchParams(window.location.search);
-      const email = params.get("email");
-      const app = document.getElementById("app");
-      let selectedJobSet = params.get("job_set") === "client_40" ? "client_40" : "core_30";
-      let activeRequest = 0;
-
-      function apiBase() {
-        return "https://ai-interest-career-backend.onrender.com";
-      }
-
-      function syncJobSetToUrl() {
-        const next = new URLSearchParams(window.location.search);
-        next.set("job_set", selectedJobSet);
-        const query = next.toString();
-        const nextUrl = window.location.pathname + (query ? "?" + query : "");
-        window.history.replaceState(null, "", nextUrl);
-      }
-
-      function renderLoading() {
-        app.innerHTML =
-          '<div class="card loader-panel" role="status" aria-live="polite" aria-busy="true">' +
-          '<div class="loader-visual">' +
-          '<div class="loader-glow"></div>' +
-          '<div class="loader-ring loader-ring--outer"></div>' +
-          '<div class="loader-ring loader-ring--inner"></div>' +
-          '<div class="loader-orbit" aria-hidden="true">' +
-          '<span></span><span></span><span></span><span></span><span></span>' +
-          '</div>' +
-          '<div class="loader-core" aria-hidden="true"></div>' +
-          '</div>' +
-          '<p class="loader-caption">Chargement des résultats…</p>' +
-          '</div>';
-      }
-
-      function renderError(msg) {
-        app.innerHTML = '<div class="state error">' + msg + "</div>";
-      }
-
-      function jobLabel(job) {
-        return job.job_label || job.job || "";
-      }
-
-      function renderData(data) {
-        const jobs = data.top_jobs || [];
-        let html = "";
-        if (data.email) {
-          html += '<span class="email-badge">' + escapeHtml(data.email) + "</span>";
-        }
-        html += '<div class="card summary">' + escapeHtml(data.summary || "") + "</div>";
-        html += '<div class="card"><h2 style="margin:0 0 1rem;font-size:1.1rem;font-weight:600;">Top 5 des correspondances</h2><ul class="jobs">';
-        jobs.forEach(function (j) {
-          html += "<li><div class=\"score\">" + Number(j.score) + '</div><div><p class="job-title">' +
-            escapeHtml(jobLabel(j)) + '</p><p class="reason">' + escapeHtml(j.reason || "") + "</p></div></li>";
-        });
-        html += "</ul></div>";
-        app.innerHTML = html;
-      }
-
-      function escapeHtml(s) {
-        return String(s)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;");
-      }
-
-      async function fetchResults() {
-        const query = "email=" + encodeURIComponent(email) + "&job_set=" + encodeURIComponent(selectedJobSet);
-        const r = await fetch(apiBase() + "/api/results?" + query);
-        if (!r.ok) {
-          const err = await r.json().catch(function () { return {}; });
-          throw new Error(err.detail || r.statusText || "Request failed");
-        }
-        return r.json();
-      }
-
-      async function loadResults() {
-        const requestId = ++activeRequest;
-        renderLoading();
-        try {
-          var data = await fetchResults();
-          if (requestId !== activeRequest) {
-            return;
-          }
-          renderData(data);
-        } catch (e) {
-          if (requestId !== activeRequest) {
-            return;
-          }
-          renderError(e.message || String(e));
-        }
-      }
-
-      if (!email) {
-        renderError("Add your email to the URL, for example: <code>results.html?email=you@example.com</code>");
-        return;
-      }
-
-      syncJobSetToUrl();
-      loadResults();
-    })();
+    CareerResults.init({
+      apiBase: window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? ""
+        : "https://ai-interest-career-backend.onrender.com",
+    });
   </script>
 </body>
 </html>
