@@ -113,6 +113,28 @@ def apple_touch_icon():
     return Response(status_code=404)
 
 
+def _frontend_file(name: str, media_type: str) -> FileResponse | Response:
+    path = FRONTEND_DIR / name
+    if path.is_file():
+        return FileResponse(path, media_type=media_type)
+    return Response(status_code=404)
+
+
+@app.get("/styles.css", include_in_schema=False)
+def styles_css():
+    return _frontend_file("styles.css", "text/css; charset=utf-8")
+
+
+@app.get("/app.js", include_in_schema=False)
+def app_js():
+    return _frontend_file("app.js", "application/javascript; charset=utf-8")
+
+
+@app.get("/favicon.svg", include_in_schema=False)
+def favicon_svg():
+    return _frontend_file("favicon.svg", "image/svg+xml")
+
+
 @app.get("/api/results", response_model=ResultsResponse)
 def get_results(
     email: str = Query(..., description="Respondent email (same as in Tally / Sheets)"),
