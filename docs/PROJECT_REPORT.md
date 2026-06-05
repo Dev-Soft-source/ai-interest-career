@@ -166,7 +166,6 @@ Semantic rules are preserved: item-level patterns inform reasons; dimensions are
 | Asset | Purpose |
 |-------|---------|
 | `data/benchmark_samples.json` | Six benchmark answer profiles |
-| `data/sample_responses_row2_sample1.csv` | Sample Responses row for Sheets import |
 | `data/test_answers.example.json` | Local answers template |
 | `scripts/try_llm.py` | End-to-end or `--scores-only` check |
 

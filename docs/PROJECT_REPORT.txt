@@ -181,7 +181,6 @@ Scorer benchmark
 
 Sample assets
 - data/benchmark_samples.json — six benchmark answer profiles
-- data/sample_responses_row2_sample1.csv — sample Responses row for Sheets
 - data/test_answers.example.json — local answers template
 - scripts/try_llm.py — end-to-end or --scores-only check
 

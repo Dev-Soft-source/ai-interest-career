@@ -98,6 +98,7 @@ python -m pytest tests
 | `GOOGLE_SERVICE_ACCOUNT_*` | Service account fields in `.env`, or `GOOGLE_SERVICE_ACCOUNT_FILE`, or default `secrets/service-account.json` |
 | `SPREADSHEET_ID` | Target spreadsheet |
 | `RESPONSES_SHEET_NAME` / `RESULTS_SHEET_NAME` | Tab names (must match the spreadsheet exactly) |
+| `WRITE_RESULTS_SHEET` | `true` = save a copy to Results after each assessment; `false` = skip |
 | `EMAIL_COLUMN` / `PROCESSED_COLUMN` | Responses headers |
 | `JOB_SET` | `core_30` (default) or `client_40` |
 | `JOBS_FILE` | Optional override for structured job JSON |
@@ -108,15 +109,25 @@ python -m pytest tests
 
 ## Google Sheets layout
 
+Two tabs in the **same** spreadsheet (`SPREADSHEET_ID`). Tab names in `.env` must match the labels at the **bottom** of the file exactly.
+
+| Setting | Role |
+|---------|------|
+| `RESPONSES_SHEET_NAME` | **Input** — Tally (or CSV import) puts one row per respondent here. **Required** for live mode. |
+| `RESULTS_SHEET_NAME` | **Optional archive** — backend can copy scores here after each run. **Not** used to load the results page. |
+| `WRITE_RESULTS_SHEET` | `true` (default) = write/update Results; `false` = only read Responses (simpler setup). |
+
+Flow: **Responses** → score + LLM → JSON to browser; optionally also append/update **Results**.
+
 ### Responses
 
 Row 1 must include **`email`** and **`A1` … `F8`**. **`processed`** is optional. Answer cells use integers **0–4**.
 
-Import helper: [data/sample_responses_row2_sample1.csv](data/sample_responses_row2_sample1.csv).
+Import helper: [data/sample_responses.csv](data/sample_responses.csv).
 
-### Results
+### Results (optional archive)
 
-The backend writes:
+When `WRITE_RESULTS_SHEET=true` (default), the backend writes:
 
 | Column | Content |
 |--------|---------|

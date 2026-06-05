@@ -2,7 +2,7 @@
 
 Align the running application with [MANUAL_CHATGPT_PROMPT_TEMPLATE.md](./MANUAL_CHATGPT_PROMPT_TEMPLATE.md): 48-item questionnaire (A1–F8), six-dimension job vectors, numeric ranking lock, `top_5` output, and strict JSON contract.
 
-**Reference data:** `data/jobs_30_core.json`, `data/jobs_40_client.json`, `data/sample_responses_row2_sample1.csv`
+**Reference data:** `data/jobs_30_core.json`, `data/jobs_40_client.json`, `data/sample_responses.csv`
 
 ---
 
@@ -59,7 +59,6 @@ flowchart LR
 
 ### Sheet layout and sample data
 
-- Import template: `data/sample_responses_row2_sample1.csv` (Sample 1 profile from the manual doc).
 - Benchmark answers: manual template **section 5** (six profiles).
 - Job vectors: `data/jobs_30_core.json`, `data/jobs_40_client.json`.
 

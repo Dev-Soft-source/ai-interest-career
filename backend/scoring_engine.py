@@ -19,5 +19,6 @@ def assess_for_email(sheets: SheetsClient, email: str) -> AssessmentResult:
 
     answers = validate_response_answers(row.answers, sheets.settings.question_columns)
     result = call_assessment(answers, settings=sheets.settings)
-    sheets.upsert_result(email=row.email, result=result)
+#    if sheets.settings.write_results_sheet:
+#        sheets.upsert_result(email=row.email, result=result)
     return result

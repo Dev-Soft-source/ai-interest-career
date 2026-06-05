@@ -82,6 +82,9 @@ class Settings(BaseSettings):
     # Dev: skip Sheets and use sample data (see README)
     use_mock_sheets: bool = False
 
+    # When false, skip writing the Results tab (API still reads Responses and scores live)
+    write_results_sheet: bool = False
+
     @field_validator("google_service_account_private_key", mode="before")
     @classmethod
     def normalize_private_key(cls, value: object) -> str | None:

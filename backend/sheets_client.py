@@ -1,9 +1,13 @@
-"""Read Tally responses and write career results to Google Sheets."""
+"""Google Sheets I/O for the career test.
+
+Responses tab (RESPONSES_SHEET_NAME): questionnaire input (email, A1–F8) — read on each assessment.
+Results tab (RESULTS_SHEET_NAME): optional archive written after scoring when WRITE_RESULTS_SHEET=true.
+The API does not read Results to serve /api/results; it always scores from Responses.
+"""
 
 from __future__ import annotations
 
 import json
-import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -11,8 +15,6 @@ from config import Settings, get_settings
 from google_credentials import has_google_service_account_credentials, load_google_credentials
 from models import AssessmentResult
 from utils import normalize_email
-
-logger = logging.getLogger(__name__)
 
 MOCK_SAMPLE_1_ANSWERS: dict[str, str] = {
     "A1": "1",
@@ -271,44 +273,6 @@ class SheetsClient:
             for c, h in enumerate(headers, start=1):
                 ws.update_cell(row_idx, c, values_by_header.get(h, ""))
 
-    def get_result_by_email(self, email: str) -> dict[str, Any] | None:
-        if self.settings.use_mock_sheets:
-            return _mock_get_result(self.settings, email)
-
-        ws = self._results_ws()
-        rows = ws.get_all_values()
-        if len(rows) < 2:
-            return None
-        headers = [h.strip() for h in rows[0]]
-        target = normalize_email(email)
-
-        def col(name: str) -> int:
-            return headers.index(name)
-
-        ei = col(self.settings.results_email_column)
-        job_set_column = self.settings.results_job_set_column
-        job_set_idx = headers.index(job_set_column) if job_set_column in headers else None
-        for row in rows[1:]:
-            if not row:
-                continue
-            while len(row) <= ei:
-                row.append("")
-            if normalize_email(row[ei]) != target:
-                continue
-            if job_set_idx is not None:
-                while len(row) <= job_set_idx:
-                    row.append("")
-                stored_job_set = row[job_set_idx].strip() or "core_30"
-                if stored_job_set != self.settings.job_set:
-                    continue
-            try:
-                return _parse_result_row(row, headers, self.settings)
-            except (ValueError, IndexError, json.JSONDecodeError) as exc:
-                logger.warning("Bad results row for %s: %s", email, exc)
-                return None
-        return None
-
-
 def _parse_result_row(row: list[str], headers: list[str], settings: Settings) -> dict[str, Any]:
     def cell(name: str) -> str:
         index = headers.index(name)
@@ -405,5 +369,3 @@ def _mock_save_result(
     }
 
 
-def _mock_get_result(settings: Settings, email: str) -> dict[str, Any] | None:
-    return _MOCK_STORE.get(_mock_result_key(email, settings.job_set))
