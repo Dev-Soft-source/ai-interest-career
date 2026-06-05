@@ -9,7 +9,7 @@ from typing import Any
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from config import REPO_ROOT, get_settings, resolve_job_set, settings_for_job_set
@@ -95,6 +95,11 @@ def _assessment_to_raw(email: str, result: AssessmentResult, job_set: JobSetName
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
 
 
 @app.get("/api/results", response_model=ResultsResponse)

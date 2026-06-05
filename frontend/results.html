@@ -85,6 +85,108 @@
       color: var(--muted);
     }
     .state.error { color: var(--error); }
+    .loader-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.75rem;
+      min-height: 220px;
+      padding: 3rem 1.5rem;
+      overflow: hidden;
+    }
+    .loader-caption {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+      animation: loader-caption 2.4s ease-in-out infinite;
+    }
+    .loader-visual {
+      position: relative;
+      width: 88px;
+      height: 88px;
+    }
+    .loader-glow {
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #5eead422 0%, transparent 70%);
+      animation: loader-pulse 2.4s ease-in-out infinite;
+    }
+    .loader-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+    .loader-ring--outer {
+      border-top-color: var(--accent);
+      border-right-color: #5eead455;
+      animation: loader-spin 1.15s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    }
+    .loader-ring--inner {
+      inset: 14px;
+      border-bottom-color: #5eead499;
+      border-left-color: #5eead433;
+      animation: loader-spin 1.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite reverse;
+    }
+    .loader-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      margin: -5px 0 0 -5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 20px #5eead4aa, 0 0 40px #5eead444;
+      animation: loader-core 2.4s ease-in-out infinite;
+    }
+    .loader-orbit {
+      position: absolute;
+      inset: 0;
+      animation: loader-spin 3.2s linear infinite;
+    }
+    .loader-orbit span {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      margin: -3px 0 0 -3px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.35;
+      transform: rotate(var(--angle)) translateY(-38px);
+      animation: loader-dot 2.4s ease-in-out infinite;
+      animation-delay: var(--delay);
+    }
+    .loader-orbit span:nth-child(1) { --angle: 0deg;   --delay: 0s;    opacity: 1; }
+    .loader-orbit span:nth-child(2) { --angle: 72deg;  --delay: 0.15s; }
+    .loader-orbit span:nth-child(3) { --angle: 144deg; --delay: 0.3s;  }
+    .loader-orbit span:nth-child(4) { --angle: 216deg; --delay: 0.45s; }
+    .loader-orbit span:nth-child(5) { --angle: 288deg; --delay: 0.6s;  }
+    @keyframes loader-caption {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+    @keyframes loader-spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes loader-pulse {
+      0%, 100% { transform: scale(0.92); opacity: 0.5; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+    @keyframes loader-core {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.85); opacity: 0.7; }
+    }
+    @keyframes loader-dot {
+      0%, 100% { opacity: 0.35; box-shadow: 0 0 0 transparent; }
+      50% { opacity: 1; box-shadow: 0 0 10px #5eead488; }
+    }
     .btn {
       display: inline-flex;
       align-items: center;
@@ -151,19 +253,11 @@
       const params = new URLSearchParams(window.location.search);
       const email = params.get("email");
       const app = document.getElementById("app");
-      const jobSetOptions = [
-        { value: "core_30", label: "30 métiers — catalogue de base", file: "jobs_30_core.json" },
-        { value: "client_40", label: "40 métiers — catalogue client", file: "jobs_40_client.json" },
-      ];
       let selectedJobSet = params.get("job_set") === "client_40" ? "client_40" : "core_30";
       let activeRequest = 0;
 
       function apiBase() {
         return "https://ai-interest-career-backend.onrender.com";
-      }
-
-      function isValidJobSet(value) {
-        return value === "core_30" || value === "client_40";
       }
 
       function syncJobSetToUrl() {
@@ -174,28 +268,24 @@
         window.history.replaceState(null, "", nextUrl);
       }
 
-      function renderJobSetPicker() {
-        let html = '<div class="card"><h2 style="margin:0 0 1rem;font-size:1.1rem;font-weight:600;">Catalogue de métiers</h2><div class="job-set-picker">';
-        jobSetOptions.forEach(function (option) {
-          const checked = option.value === selectedJobSet ? " checked" : "";
-          const selectedClass = option.value === selectedJobSet ? " is-selected" : "";
-          html += '<label class="job-set-option' + selectedClass + '">' +
-            '<input type="radio" name="job_set" value="' + option.value + '"' + checked + ">" +
-            '<span><span class="job-set-label">' + escapeHtml(option.label) + "</span>" +
-            '<span class="job-set-file">' + escapeHtml(option.file) + "</span></span></label>";
-        });
-        html += "</div></div>";
-        return html;
-      }
-
-      function renderLoading(msg) {
-        app.innerHTML = renderJobSetPicker() + '<div class="state">' + (msg || "Loading results…") + "</div>";
-        bindJobSetPicker();
+      function renderLoading() {
+        app.innerHTML =
+          '<div class="card loader-panel" role="status" aria-live="polite" aria-busy="true">' +
+          '<div class="loader-visual">' +
+          '<div class="loader-glow"></div>' +
+          '<div class="loader-ring loader-ring--outer"></div>' +
+          '<div class="loader-ring loader-ring--inner"></div>' +
+          '<div class="loader-orbit" aria-hidden="true">' +
+          '<span></span><span></span><span></span><span></span><span></span>' +
+          '</div>' +
+          '<div class="loader-core" aria-hidden="true"></div>' +
+          '</div>' +
+          '<p class="loader-caption">Chargement des résultats…</p>' +
+          '</div>';
       }
 
       function renderError(msg) {
-        app.innerHTML = renderJobSetPicker() + '<div class="state error">' + msg + "</div>";
-        bindJobSetPicker();
+        app.innerHTML = '<div class="state error">' + msg + "</div>";
       }
 
       function jobLabel(job) {
@@ -204,7 +294,7 @@
 
       function renderData(data) {
         const jobs = data.top_jobs || [];
-        let html = renderJobSetPicker();
+        let html = "";
         if (data.email) {
           html += '<span class="email-badge">' + escapeHtml(data.email) + "</span>";
         }
@@ -216,7 +306,6 @@
         });
         html += "</ul></div>";
         app.innerHTML = html;
-        bindJobSetPicker();
       }
 
       function escapeHtml(s) {
@@ -225,20 +314,6 @@
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;");
-      }
-
-      function bindJobSetPicker() {
-        const inputs = app.querySelectorAll('input[name="job_set"]');
-        inputs.forEach(function (input) {
-          input.onchange = function () {
-            if (!isValidJobSet(input.value) || input.value === selectedJobSet) {
-              return;
-            }
-            selectedJobSet = input.value;
-            syncJobSetToUrl();
-            loadResults();
-          };
-        });
       }
 
       async function fetchResults() {
@@ -253,7 +328,7 @@
 
       async function loadResults() {
         const requestId = ++activeRequest;
-        renderLoading("Chargement des résultats…");
+        renderLoading();
         try {
           var data = await fetchResults();
           if (requestId !== activeRequest) {
