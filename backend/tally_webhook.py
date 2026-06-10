@@ -7,6 +7,7 @@ import hashlib
 import hmac
 import json
 import logging
+import re
 from typing import Any
 
 from config import Settings
@@ -14,6 +15,28 @@ from config import Settings
 logger = logging.getLogger(__name__)
 
 EMAIL_FIELD_TYPES = frozenset({"INPUT_EMAIL"})
+SCORABLE_FIELD_TYPES = frozenset(
+    {"LINEAR_SCALE", "RATING", "MULTIPLE_CHOICE", "DROPDOWN", "MULTI_SELECT"}
+)
+SKIP_FIELD_TYPES = frozenset(
+    {
+        "HIDDEN_FIELDS",
+        "CALCULATED_FIELDS",
+        "CHECKBOXES",
+        "FILE_UPLOAD",
+        "PAYMENT",
+        "SIGNATURE",
+        "MATRIX",
+        "RANKING",
+        "INPUT_TEXT",
+        "TEXTAREA",
+        "INPUT_LINK",
+        "INPUT_PHONE_NUMBER",
+        "INPUT_DATE",
+        "INPUT_TIME",
+        "INPUT_NUMBER",
+    }
+)
 
 
 def verify_tally_signature(body: bytes, signature: str | None, secret: str) -> bool:
@@ -50,8 +73,10 @@ def parse_tally_submission(payload: dict[str, Any], settings: Settings) -> dict[
     """
     Extract email and questionnaire answers from a Tally FORM_RESPONSE webhook.
 
-    Fields are matched to sheet columns by label (case-insensitive), using
-    settings.email_column and settings.question_columns.
+    Answers are stored as A1..F8 for Google Sheets. Mapping order:
+    1) Sheet column labels (EMAIL_COLUMN, QUESTION_COLUMNS / A1..F8)
+    2) TALLY_FIELD_LABELS (48 Tally labels in A1..F8 order)
+    3) Raw Tally scale questions mapped by form field order (TALLY_MAP_RAW_BY_ORDER)
     """
     if payload.get("eventType") != "FORM_RESPONSE":
         raise ValueError(f'Unsupported event type: {payload.get("eventType")!r}')
@@ -64,61 +89,208 @@ def parse_tally_submission(payload: dict[str, Any], settings: Settings) -> dict[
     if not isinstance(fields, list):
         raise ValueError("Missing fields array in webhook payload")
 
-    email_label = _normalize_label(settings.email_column)
-    question_labels = {_normalize_label(column): column for column in settings.question_columns}
+    received_labels = [_field_label(field) for field in fields if isinstance(field, dict)]
+    received_labels = [label for label in received_labels if label]
 
-    email: str | None = None
-    email_fallback: str | None = None
-    answers: dict[str, str] = {}
-    received_labels: list[str] = []
-
-    for field in fields:
-        if not isinstance(field, dict):
-            continue
-        raw_label = _field_label(field)
-        if raw_label:
-            received_labels.append(raw_label)
-        label = _normalize_label(raw_label)
-        value = extract_field_value(field)
-        if value is None:
-            continue
-
-        if _labels_match(label, email_label):
-            email = value
-            continue
-
-        if field.get("type") in EMAIL_FIELD_TYPES and email_fallback is None:
-            email_fallback = value
-
-        matched_column = _match_question_column(label, question_labels)
-        if matched_column:
-            answers[matched_column] = value
-
-    if not email:
-        email = email_fallback
-    if not email:
-        raise ValueError(
-            f'No email field found (expected label "{settings.email_column}"). '
-            f"Received labels: {_format_label_sample(received_labels)}"
-        )
+    email = _extract_email(fields, settings)
+    answers = _map_answers_by_column_labels(fields, settings)
+    answers = _fill_answers_from_tally_field_labels(fields, settings, answers)
 
     missing = [column for column in settings.question_columns if column not in answers]
+    if missing and settings.tally_map_raw_by_order:
+        raw_answers = _map_answers_by_field_order(fields, settings)
+        if raw_answers:
+            logger.info(
+                "Mapped %d raw Tally scale fields to A1..F8 by form order",
+                len(raw_answers),
+            )
+            answers = raw_answers
+            missing = [column for column in settings.question_columns if column not in answers]
+
     if missing:
+        scorable = _collect_scorable_fields(fields, settings)
         raise ValueError(
             "Missing questionnaire answers for: "
             + ", ".join(missing[:8])
             + ("..." if len(missing) > 8 else "")
-            + ". Set QUESTION_COLUMNS in Render to match Tally field labels exactly, "
-            "or rename Tally questions / calculated fields to A1..F8. "
+            + ". Remove A1..F8 calculated fields from Tally and use raw scale questions, "
+            "or set TALLY_FIELD_LABELS to your 48 question labels in order. "
+            f"Scorable fields found: {len(scorable)} (need {len(settings.question_columns)}). "
             f"Received labels: {_format_label_sample(received_labels)}"
         )
 
+    normalized_answers = {
+        column: _coerce_score(answers[column], column) for column in settings.question_columns
+    }
+
     return {
         "email": email.strip(),
-        "answers": answers,
+        "answers": normalized_answers,
         "submission_id": data.get("submissionId") or data.get("responseId"),
         "form_id": data.get("formId"),
     }
+
+
+def _extract_email(fields: list[Any], settings: Settings) -> str:
+    email_label = _normalize_label(settings.email_column)
+    email: str | None = None
+    email_fallback: str | None = None
+
+    for field in fields:
+        if not isinstance(field, dict):
+            continue
+        label = _normalize_label(_field_label(field))
+        value = extract_field_value(field)
+        if value is None:
+            continue
+        if _labels_match(label, email_label):
+            email = value
+            break
+        if field.get("type") in EMAIL_FIELD_TYPES and email_fallback is None:
+            email_fallback = value
+
+    if not email:
+        email = email_fallback
+    if not email:
+        labels = [_field_label(field) for field in fields if isinstance(field, dict)]
+        raise ValueError(
+            f'No email field found (expected label "{settings.email_column}"). '
+            f"Received labels: {_format_label_sample(labels)}"
+        )
+    return email
+
+
+def _map_answers_by_column_labels(fields: list[Any], settings: Settings) -> dict[str, str]:
+    question_labels = {_normalize_label(column): column for column in settings.question_columns}
+    answers: dict[str, str] = {}
+
+    for field in fields:
+        if not isinstance(field, dict):
+            continue
+        label = _normalize_label(_field_label(field))
+        value = extract_field_value(field)
+        if value is None:
+            continue
+        matched_column = _match_question_column(label, question_labels)
+        if matched_column:
+            answers[matched_column] = value
+
+    return answers
+
+
+def _fill_answers_from_tally_field_labels(
+    fields: list[Any],
+    settings: Settings,
+    answers: dict[str, str],
+) -> dict[str, str]:
+    if not settings.tally_field_labels:
+        return answers
+
+    if len(settings.tally_field_labels) != len(settings.question_columns):
+        raise ValueError(
+            "TALLY_FIELD_LABELS must contain exactly "
+            f"{len(settings.question_columns)} comma-separated labels (one per A1..F8)."
+        )
+
+    label_to_column = {
+        _normalize_label(label): column
+        for label, column in zip(settings.tally_field_labels, settings.question_columns, strict=True)
+    }
+    merged = dict(answers)
+
+    for field in fields:
+        if not isinstance(field, dict):
+            continue
+        label = _normalize_label(_field_label(field))
+        column = label_to_column.get(label)
+        if column is None:
+            continue
+        value = extract_field_value(field)
+        if value is not None:
+            merged[column] = value
+
+    return merged
+
+
+def _map_answers_by_field_order(fields: list[Any], settings: Settings) -> dict[str, str] | None:
+    scorable = _collect_scorable_fields(fields, settings)
+    expected = len(settings.question_columns)
+    if len(scorable) != expected:
+        return None
+
+    answers: dict[str, str] = {}
+    for column, field in zip(settings.question_columns, scorable, strict=True):
+        value = extract_field_value(field)
+        if value is None:
+            return None
+        answers[column] = value
+    return answers
+
+
+def _collect_scorable_fields(fields: list[Any], settings: Settings) -> list[dict[str, Any]]:
+    email_label = _normalize_label(settings.email_column)
+    scorable: list[dict[str, Any]] = []
+
+    for field in fields:
+        if not isinstance(field, dict):
+            continue
+        field_type = field.get("type")
+        if field_type in SKIP_FIELD_TYPES or field_type in EMAIL_FIELD_TYPES:
+            continue
+        if field_type not in SCORABLE_FIELD_TYPES:
+            continue
+        label = _normalize_label(_field_label(field))
+        if _labels_match(label, email_label):
+            continue
+        if extract_field_value(field) is None:
+            continue
+        scorable.append(field)
+
+    return scorable
+
+
+def _coerce_score(raw: str, column: str) -> str:
+    score = normalize_score_text(raw)
+    if score is None:
+        raise ValueError(f'Could not parse score 0-4 for "{column}" from value "{raw}"')
+    return score
+
+
+def normalize_score_text(text: str) -> str | None:
+    """Map Tally option/scale text to a score string 0-4."""
+    stripped = text.strip()
+    if stripped in {"0", "1", "2", "3", "4"}:
+        return stripped
+
+    paren_match = re.search(r"\(([0-4])\)\s*$", stripped)
+    if paren_match:
+        return paren_match.group(1)
+
+    leading_match = re.match(r"^([0-4])\s*[\.\)\:\-–]", stripped)
+    if leading_match:
+        return leading_match.group(1)
+
+    for char in reversed(stripped):
+        if char in "01234":
+            return char
+
+    lowered = stripped.casefold()
+    french_keywords = {
+        "pas du tout": "0",
+        "tout à fait": "4",
+        "tout a fait": "4",
+        "beaucoup": "3",
+        "plutôt": "3",
+        "plutot": "3",
+        "moyennement": "2",
+        "un peu": "1",
+        "jamais": "0",
+        "toujours": "4",
+    }
+    for phrase, score in french_keywords.items():
+        if phrase in lowered:
+            return score
+    return None
 
 
 def _field_label(field: dict[str, Any]) -> str:
@@ -171,19 +343,23 @@ def extract_field_value(field: dict[str, Any]) -> str | None:
     field_type = field.get("type")
 
     if field_type in {"INPUT_EMAIL", "INPUT_TEXT", "INPUT_NUMBER", "LINEAR_SCALE", "RATING"}:
-        return str(raw).strip()
+        text = str(raw).strip()
+        if field_type in {"LINEAR_SCALE", "RATING", "INPUT_NUMBER"}:
+            return normalize_score_text(text) or text
+        return text
 
     if field_type == "CALCULATED_FIELDS":
-        return str(raw).strip()
+        text = str(raw).strip()
+        return normalize_score_text(text) or text
 
     if field_type in {"MULTIPLE_CHOICE", "DROPDOWN", "MULTI_SELECT"}:
         return _choice_value(field, raw)
 
     if isinstance(raw, (int, float, bool)):
-        return str(raw)
+        return normalize_score_text(str(raw)) or str(raw)
 
     if isinstance(raw, str):
-        return raw.strip()
+        return normalize_score_text(raw) or raw.strip()
 
     return None
 
@@ -199,21 +375,10 @@ def _choice_value(field: dict[str, Any], raw: Any) -> str | None:
     for selected in selected_ids:
         text = id_to_text.get(str(selected), "").strip()
         if text:
-            return _normalize_score_text(text)
+            return normalize_score_text(text) or text
         if selected is not None and str(selected).strip():
-            return _normalize_score_text(str(selected).strip())
+            return normalize_score_text(str(selected).strip()) or str(selected).strip()
     return None
-
-
-def _normalize_score_text(text: str) -> str:
-    """Map Tally option text like '3' or 'Plutôt (3)' to a score string."""
-    stripped = text.strip()
-    if stripped.isdigit() and len(stripped) == 1:
-        return stripped
-    for char in stripped:
-        if char.isdigit():
-            return char
-    return stripped
 
 
 def _normalize_label(label: str) -> str:

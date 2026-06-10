@@ -81,6 +81,10 @@ class Settings(BaseSettings):
 
     # Tally webhook (optional backup for Tally → Sheets native sync)
     tally_webhook_secret: str | None = None
+    # Map raw Tally scale questions to A1..F8 by form field order when labels are not A1..F8
+    tally_map_raw_by_order: bool = True
+    # Optional: 48 Tally question labels in A1..F8 order (comma-separated in .env)
+    tally_field_labels: list[str] | None = None
 
     # Dev: skip Sheets and use sample data (see README)
     use_mock_sheets: bool = False
@@ -112,6 +116,16 @@ class Settings(BaseSettings):
             return default_question_columns()
         if isinstance(value, str):
             return [part.strip() for part in value.split(",") if part.strip()]
+        return value  # type: ignore[return-value]
+
+    @field_validator("tally_field_labels", mode="before")
+    @classmethod
+    def parse_tally_field_labels(cls, value: object) -> list[str] | None:
+        if value is None or value == "":
+            return None
+        if isinstance(value, str):
+            labels = [part.strip() for part in value.split(",") if part.strip()]
+            return labels or None
         return value  # type: ignore[return-value]
 
 

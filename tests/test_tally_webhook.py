@@ -16,7 +16,7 @@ sys.path.insert(0, str(BACKEND_DIR))
 import sheets_client
 from config import Settings, default_question_columns, get_settings
 from main import app
-from tally_webhook import parse_tally_submission, verify_tally_signature
+from tally_webhook import normalize_score_text, parse_tally_submission, verify_tally_signature
 
 
 @pytest.fixture(autouse=True)
@@ -108,6 +108,60 @@ def test_tally_webhook_appends_row(client: TestClient):
     row = sheets.get_response_by_email("webhook@example.com")
     assert row is not None
     assert row.answers["B3"] == "2"
+
+
+def _raw_french_payload(email: str = "raw@example.com") -> dict:
+    fields: list[dict] = [
+        {
+            "key": "question_email",
+            "label": "Votre email",
+            "type": "INPUT_EMAIL",
+            "value": email,
+        }
+    ]
+    for index in range(1, 49):
+        fields.append(
+            {
+                "key": f"question_q{index}",
+                "label": f"Intérêt professionnel {index}",
+                "type": "MULTIPLE_CHOICE",
+                "value": ["opt-3"],
+                "options": [
+                    {"id": "opt-0", "text": "Pas du tout (0)"},
+                    {"id": "opt-1", "text": "Un peu (1)"},
+                    {"id": "opt-2", "text": "Moyennement (2)"},
+                    {"id": "opt-3", "text": "Plutôt (3)"},
+                    {"id": "opt-4", "text": "Tout à fait (4)"},
+                ],
+            }
+        )
+    return {
+        "eventId": "evt-raw",
+        "eventType": "FORM_RESPONSE",
+        "createdAt": "2026-05-22T12:00:00.000Z",
+        "data": {
+            "responseId": "resp-raw",
+            "submissionId": "resp-raw",
+            "formId": "form-raw",
+            "formName": "Career test",
+            "fields": fields,
+        },
+    }
+
+
+def test_map_raw_tally_fields_by_order():
+    settings = Settings(email_column="Votre email", tally_map_raw_by_order=True)
+    parsed = parse_tally_submission(_raw_french_payload(), settings)
+    assert parsed["email"] == "raw@example.com"
+    assert parsed["answers"]["A1"] == "3"
+    assert parsed["answers"]["F8"] == "3"
+    assert len(parsed["answers"]) == 48
+
+
+def test_normalize_score_text_handles_french_options():
+    assert normalize_score_text("Plutôt (3)") == "3"
+    assert normalize_score_text("Pas du tout (0)") == "0"
+    assert normalize_score_text("Tout à fait (4)") == "4"
 
 
 def test_tally_webhook_requires_signature_when_secret_set(client: TestClient, monkeypatch):

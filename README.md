@@ -186,7 +186,9 @@ If Tally’s native Google Sheets sync is unreliable, add a webhook so submissio
 3. Enable a **signing secret**, copy it to `TALLY_WEBHOOK_SECRET` in `.env` / Render
 4. Keep your existing **redirect on completion** URL unchanged
 
-The webhook matches Tally field **labels** to sheet columns (`EMAIL_COLUMN`, default `A1`–`F8`). If your email column is `Votre email`, set `EMAIL_COLUMN=Votre email`. Name Tally questions `A1`…`F8`, or set `QUESTION_COLUMNS` to match your question labels.
+Set `EMAIL_COLUMN=Votre email` if your sheet uses that header.
+
+**Raw Tally answers (recommended):** you do not need A1–F8 calculated fields in Tally. Use 48 scale/multiple-choice questions; the webhook maps them to `A1`–`F8` automatically (`TALLY_MAP_RAW_BY_ORDER=true`, default). Optionally set `TALLY_FIELD_LABELS` to your 48 question labels in `A1`–`F8` order if field order is not stable.
 
 You can disable Tally’s native Google Sheets integration once the webhook is verified, to avoid duplicate rows.
 
