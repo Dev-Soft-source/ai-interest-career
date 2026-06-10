@@ -70,29 +70,37 @@ def parse_tally_submission(payload: dict[str, Any], settings: Settings) -> dict[
     email: str | None = None
     email_fallback: str | None = None
     answers: dict[str, str] = {}
+    received_labels: list[str] = []
 
     for field in fields:
         if not isinstance(field, dict):
             continue
-        label = _normalize_label(str(field.get("label") or ""))
+        raw_label = _field_label(field)
+        if raw_label:
+            received_labels.append(raw_label)
+        label = _normalize_label(raw_label)
         value = extract_field_value(field)
         if value is None:
             continue
 
-        if label == email_label:
+        if _labels_match(label, email_label):
             email = value
             continue
 
         if field.get("type") in EMAIL_FIELD_TYPES and email_fallback is None:
             email_fallback = value
 
-        if label in question_labels:
-            answers[question_labels[label]] = value
+        matched_column = _match_question_column(label, question_labels)
+        if matched_column:
+            answers[matched_column] = value
 
     if not email:
         email = email_fallback
     if not email:
-        raise ValueError(f'No email field found (expected label "{settings.email_column}")')
+        raise ValueError(
+            f'No email field found (expected label "{settings.email_column}"). '
+            f"Received labels: {_format_label_sample(received_labels)}"
+        )
 
     missing = [column for column in settings.question_columns if column not in answers]
     if missing:
@@ -100,7 +108,9 @@ def parse_tally_submission(payload: dict[str, Any], settings: Settings) -> dict[
             "Missing questionnaire answers for: "
             + ", ".join(missing[:8])
             + ("..." if len(missing) > 8 else "")
-            + ". Match Tally question labels to QUESTION_COLUMNS or name fields A1..F8."
+            + ". Set QUESTION_COLUMNS in Render to match Tally field labels exactly, "
+            "or rename Tally questions / calculated fields to A1..F8. "
+            f"Received labels: {_format_label_sample(received_labels)}"
         )
 
     return {
@@ -109,6 +119,47 @@ def parse_tally_submission(payload: dict[str, Any], settings: Settings) -> dict[
         "submission_id": data.get("submissionId") or data.get("responseId"),
         "form_id": data.get("formId"),
     }
+
+
+def _field_label(field: dict[str, Any]) -> str:
+    for key in ("label", "title", "name"):
+        value = field.get(key)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return ""
+
+
+def _labels_match(normalized_label: str, normalized_target: str) -> bool:
+    if not normalized_label or not normalized_target:
+        return False
+    if normalized_label == normalized_target:
+        return True
+    return normalized_label.startswith(normalized_target + " ") or normalized_label.startswith(
+        normalized_target + "."
+    )
+
+
+def _match_question_column(
+    normalized_label: str,
+    question_labels: dict[str, str],
+) -> str | None:
+    if normalized_label in question_labels:
+        return question_labels[normalized_label]
+    for key, column in question_labels.items():
+        if _labels_match(normalized_label, key):
+            return column
+    return None
+
+
+def _format_label_sample(labels: list[str], limit: int = 12) -> str:
+    unique = list(dict.fromkeys(label for label in labels if label))
+    if not unique:
+        return "(none)"
+    sample = unique[:limit]
+    text = ", ".join(sample)
+    if len(unique) > limit:
+        text += f", ... ({len(unique)} total)"
+    return text
 
 
 def extract_field_value(field: dict[str, Any]) -> str | None:
@@ -148,10 +199,21 @@ def _choice_value(field: dict[str, Any], raw: Any) -> str | None:
     for selected in selected_ids:
         text = id_to_text.get(str(selected), "").strip()
         if text:
-            return text
+            return _normalize_score_text(text)
         if selected is not None and str(selected).strip():
-            return str(selected).strip()
+            return _normalize_score_text(str(selected).strip())
     return None
+
+
+def _normalize_score_text(text: str) -> str:
+    """Map Tally option text like '3' or 'Plutôt (3)' to a score string."""
+    stripped = text.strip()
+    if stripped.isdigit() and len(stripped) == 1:
+        return stripped
+    for char in stripped:
+        if char.isdigit():
+            return char
+    return stripped
 
 
 def _normalize_label(label: str) -> str:
