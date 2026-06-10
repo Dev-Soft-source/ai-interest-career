@@ -25,6 +25,7 @@ def reset_mock_state(monkeypatch: pytest.MonkeyPatch):
     sheets_client._MOCK_ROWS_STATE = None
     monkeypatch.setenv("USE_MOCK_SHEETS", "true")
     monkeypatch.setenv("EMAIL_COLUMN", "Votre email")
+    monkeypatch.setenv("TALLY_WEBHOOK_SECRET", "")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -88,7 +89,13 @@ def test_verify_tally_signature():
     signature = _sign_payload(payload, secret)
     body = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     assert verify_tally_signature(body, signature, secret)
-    assert not verify_tally_signature(body, "bad-signature", secret)
+    assert verify_tally_signature(body, "bad-signature", secret) is False
+    # Tally may sign the raw request bytes on the wire.
+    raw_body = b'{"eventType":"FORM_RESPONSE","data":{"fields":[]}}'
+    raw_sig = base64.b64encode(
+        hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
+    ).decode("ascii")
+    assert verify_tally_signature(raw_body, raw_sig, secret)
 
 
 def test_tally_webhook_appends_row(client: TestClient):

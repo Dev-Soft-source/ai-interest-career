@@ -17,25 +17,33 @@ EMAIL_FIELD_TYPES = frozenset({"INPUT_EMAIL"})
 
 
 def verify_tally_signature(body: bytes, signature: str | None, secret: str) -> bool:
-    """Verify Tally-Signature header (SHA256 HMAC of JSON payload, base64)."""
+    """Verify Tally-Signature header (SHA256 HMAC, base64)."""
     if not signature or not secret:
         return False
+
+    secret_bytes = secret.encode("utf-8")
+    candidates: list[bytes] = [body]
+
     try:
         payload = json.loads(body)
     except json.JSONDecodeError:
-        return False
-    canonical = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
-    calculated = base64.b64encode(
-        hmac.new(secret.encode("utf-8"), canonical.encode("utf-8"), hashlib.sha256).digest()
-    ).decode("ascii")
-    if hmac.compare_digest(calculated, signature):
-        return True
-    # Some runtimes stringify with ASCII escapes only.
-    canonical_ascii = json.dumps(payload, separators=(",", ":"), ensure_ascii=True)
-    calculated_ascii = base64.b64encode(
-        hmac.new(secret.encode("utf-8"), canonical_ascii.encode("utf-8"), hashlib.sha256).digest()
-    ).decode("ascii")
-    return hmac.compare_digest(calculated_ascii, signature)
+        payload = None
+
+    if payload is not None:
+        candidates.extend(
+            [
+                json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8"),
+                json.dumps(payload, separators=(",", ":"), ensure_ascii=True).encode("utf-8"),
+            ]
+        )
+
+    for material in candidates:
+        calculated = base64.b64encode(
+            hmac.new(secret_bytes, material, hashlib.sha256).digest()
+        ).decode("ascii")
+        if hmac.compare_digest(calculated, signature):
+            return True
+    return False
 
 
 def parse_tally_submission(payload: dict[str, Any], settings: Settings) -> dict[str, Any]:
