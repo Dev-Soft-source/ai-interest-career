@@ -79,6 +79,9 @@ class Settings(BaseSettings):
         description="Comma-separated job_id values; used when enforce_core_job_whitelist is true",
     )
 
+    # Tally webhook (optional backup for Tally → Sheets native sync)
+    tally_webhook_secret: str | None = None
+
     # Dev: skip Sheets and use sample data (see README)
     use_mock_sheets: bool = False
 

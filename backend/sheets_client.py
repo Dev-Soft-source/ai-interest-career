@@ -198,6 +198,38 @@ class SheetsClient:
                 last = row
         return last
 
+    def append_response_row(self, email: str, answers: dict[str, str]) -> int:
+        """Append one Responses row (used by the Tally webhook). Returns 1-based row index."""
+        if self.settings.use_mock_sheets:
+            return _mock_append_row(email, answers)
+
+        ws = self._responses_ws()
+        rows = ws.get_all_values()
+        headers = [h.strip() for h in rows[0]] if rows else []
+
+        if not headers:
+            headers = [self.settings.email_column, *self.settings.question_columns]
+            ws.append_row(headers)
+            rows = ws.get_all_values()
+            headers = [h.strip() for h in rows[0]]
+
+        for name in [self.settings.email_column, *self.settings.question_columns]:
+            if name not in headers:
+                headers.append(name)
+                ws.update_cell(1, len(headers), name)
+
+        row_values = []
+        for header in headers:
+            if header == self.settings.email_column:
+                row_values.append(email.strip())
+            elif header in self.settings.question_columns:
+                row_values.append(answers.get(header, ""))
+            else:
+                row_values.append("")
+
+        ws.append_row(row_values)
+        return len(rows) + 1
+
     def mark_processed(self, row_number: int, value: str = "TRUE") -> None:
         if self.settings.use_mock_sheets:
             _mock_mark_processed(row_number, value)
@@ -336,6 +368,23 @@ def _mock_rows(settings: Settings) -> list[ResponseRow]:
             )
         ]
     return _MOCK_ROWS_STATE
+
+
+def _mock_append_row(email: str, answers: dict[str, str]) -> int:
+    global _MOCK_ROWS_STATE
+    if _MOCK_ROWS_STATE is None:
+        _mock_rows(get_settings())
+    assert _MOCK_ROWS_STATE is not None
+    row_number = max((row.row_number for row in _MOCK_ROWS_STATE), default=1) + 1
+    _MOCK_ROWS_STATE.append(
+        ResponseRow(
+            email=email.strip(),
+            answers={key: str(value) for key, value in answers.items()},
+            row_number=row_number,
+            processed_raw=None,
+        )
+    )
+    return row_number
 
 
 def _mock_mark_processed(row_number: int, value: str) -> None:

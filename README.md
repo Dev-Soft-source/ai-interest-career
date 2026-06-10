@@ -175,7 +175,20 @@ On the thank-you screen, redirect to your deployed host, for example:
 
 `https://your-domain.com/results.html?email={field:email}`
 
-Use the correct merge tag for your email field.
+Use the correct merge tag for your email field (pick the email question with `@` in Tally).
+
+## Tally webhook (recommended backup)
+
+If Tally’s native Google Sheets sync is unreliable, add a webhook so submissions are written by this API:
+
+1. In Tally → **Integrations** → **Webhooks** → **Connect**
+2. **Endpoint URL:** `https://your-backend.onrender.com/api/tally-webhook`
+3. Enable a **signing secret**, copy it to `TALLY_WEBHOOK_SECRET` in `.env` / Render
+4. Keep your existing **redirect on completion** URL unchanged
+
+The webhook matches Tally field **labels** to sheet columns (`EMAIL_COLUMN`, default `A1`–`F8`). If your email column is `Votre email`, set `EMAIL_COLUMN=Votre email`. Name Tally questions `A1`…`F8`, or set `QUESTION_COLUMNS` to match your question labels.
+
+You can disable Tally’s native Google Sheets integration once the webhook is verified, to avoid duplicate rows.
 
 ## Deployment
 

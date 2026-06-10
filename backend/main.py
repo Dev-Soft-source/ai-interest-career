@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +17,7 @@ from config import REPO_ROOT, get_settings, resolve_job_set, settings_for_job_se
 from models import AssessmentResult, DimensionVector, JobSetName, ResultsResponse, TopJobResult
 from scoring_engine import assess_for_email
 from sheets_client import SheetsClient
+from tally_webhook import parse_tally_submission, verify_tally_signature
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -133,6 +135,50 @@ def app_js():
 @app.get("/favicon.svg", include_in_schema=False)
 def favicon_svg():
     return _frontend_file("favicon.svg", "image/svg+xml")
+
+
+@app.post("/api/tally-webhook")
+async def tally_webhook(request: Request):
+    """Receive Tally FORM_RESPONSE webhooks and append a row to the Responses sheet."""
+    settings = get_settings()
+    raw_body = await request.body()
+    signature = request.headers.get("tally-signature")
+
+    if settings.tally_webhook_secret:
+        if not verify_tally_signature(raw_body, signature, settings.tally_webhook_secret):
+            raise HTTPException(status_code=401, detail="Invalid Tally webhook signature")
+    elif signature:
+        logger.warning("Tally-Signature received but TALLY_WEBHOOK_SECRET is not set")
+
+    try:
+        payload = json.loads(raw_body)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Invalid JSON body") from exc
+
+    try:
+        parsed = parse_tally_submission(payload, settings)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    sheets = SheetsClient(settings)
+    try:
+        row_number = sheets.append_response_row(parsed["email"], parsed["answers"])
+    except Exception as exc:
+        logger.exception("Failed to append Tally submission for %s", parsed["email"])
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    logger.info(
+        "Tally webhook stored submission %s for %s at row %s",
+        parsed.get("submission_id"),
+        parsed["email"],
+        row_number,
+    )
+    return {
+        "status": "ok",
+        "email": parsed["email"],
+        "row_number": row_number,
+        "submission_id": parsed.get("submission_id"),
+    }
 
 
 @app.get("/api/results", response_model=ResultsResponse)
