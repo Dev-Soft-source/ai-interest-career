@@ -35,7 +35,10 @@ window.CareerResults = (function () {
     );
   }
 
-  function renderLoadingHtml() {
+  function renderLoadingHtml(statusText) {
+    var statusLine = statusText
+      ? '<p class="loader-status">' + escapeHtml(statusText) + "</p>"
+      : "";
     return (
       '<div class="card loader-panel" role="status" aria-live="polite" aria-busy="true" aria-label="Chargement des résultats">' +
       '<div class="loader-scene" aria-hidden="true">' +
@@ -52,6 +55,7 @@ window.CareerResults = (function () {
       '<div class="loader-progress" aria-hidden="true"></div>' +
       '<div class="loader-copy">' +
       '<p class="loader-title">Découverte de vos métiers</p>' +
+      statusLine +
       '<div class="loader-messages">' +
       "<span>Analyse de vos réponses…</span>" +
       "<span>Calcul de vos correspondances…</span>" +
@@ -175,6 +179,42 @@ window.CareerResults = (function () {
 
     var selectedJobSet = params.get("job_set") === "client_40" ? "client_40" : "core_30";
     var activeRequest = 0;
+    var retryAttempts = options.resultsRetryAttempts != null ? options.resultsRetryAttempts : 15;
+    var retryDelayMs = options.resultsRetryDelayMs != null ? options.resultsRetryDelayMs : 3000;
+
+    function sleep(ms) {
+      return new Promise(function (resolve) {
+        window.setTimeout(resolve, ms);
+      });
+    }
+
+    function isPendingSubmissionError(detail) {
+      var text = String(detail || "").toLowerCase();
+      return text.indexOf("no response row") !== -1 || text.indexOf("google sheets") !== -1;
+    }
+
+    function isRetryableError(error) {
+      if (!error) {
+        return false;
+      }
+      if (error.status === 404 && isPendingSubmissionError(error.detail || error.message)) {
+        return true;
+      }
+      if (error.status === 502 || error.status === 503 || error.status === 504) {
+        return true;
+      }
+      return !error.status && (error instanceof TypeError || String(error.message) === "Failed to fetch");
+    }
+
+    function formatErrorMessage(error) {
+      if (isPendingSubmissionError(error.detail || error.message)) {
+        return (
+          "Vos réponses ne sont pas encore disponibles. " +
+          "Si vous venez de terminer le questionnaire, patientez quelques instants puis réessayez."
+        );
+      }
+      return error.message || String(error);
+    }
 
     function syncJobSetToUrl() {
       var next = new URLSearchParams(window.location.search);
@@ -203,8 +243,17 @@ window.CareerResults = (function () {
       });
     }
 
-    function renderLoading() {
-      app.innerHTML = renderLoadingHtml();
+    function renderLoading(statusText) {
+      app.innerHTML = renderLoadingHtml(statusText);
+    }
+
+    function updateLoadingStatus(statusText) {
+      var statusEl = app.querySelector(".loader-status");
+      if (statusEl) {
+        statusEl.textContent = statusText;
+        return;
+      }
+      renderLoading(statusText);
     }
 
     function renderError(msg) {
@@ -226,24 +275,47 @@ window.CareerResults = (function () {
       }, 140);
     }
 
-    async function fetchResults() {
+    async function fetchResultsOnce() {
       var query = "email=" + encodeURIComponent(email) + "&job_set=" + encodeURIComponent(selectedJobSet);
       var r = await fetch(apiBase + "/api/results?" + query);
       if (!r.ok) {
         var err = await r.json().catch(function () {
           return {};
         });
-        throw new Error(err.detail || r.statusText || "Request failed");
+        var error = new Error(err.detail || r.statusText || "Request failed");
+        error.status = r.status;
+        error.detail = err.detail;
+        throw error;
       }
       return r.json();
+    }
+
+    async function fetchResults(requestId) {
+      for (var attempt = 1; attempt <= retryAttempts; attempt++) {
+        if (requestId !== activeRequest) {
+          return null;
+        }
+        try {
+          return await fetchResultsOnce();
+        } catch (e) {
+          if (!isRetryableError(e) || attempt === retryAttempts) {
+            throw e;
+          }
+          updateLoadingStatus(
+            "Enregistrement de vos réponses… (" + attempt + "/" + retryAttempts + ")"
+          );
+          await sleep(retryDelayMs);
+        }
+      }
+      return null;
     }
 
     async function loadResults() {
       var requestId = ++activeRequest;
       renderLoading();
       try {
-        var data = await fetchResults();
-        if (requestId !== activeRequest) {
+        var data = await fetchResults(requestId);
+        if (requestId !== activeRequest || data == null) {
           return;
         }
         renderData(data);
@@ -251,7 +323,7 @@ window.CareerResults = (function () {
         if (requestId !== activeRequest) {
           return;
         }
-        renderError(e.message || String(e));
+        renderError(formatErrorMessage(e));
       }
     }
 
